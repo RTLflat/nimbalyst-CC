@@ -8,16 +8,16 @@ The SDK is versioned independently of the Nimbalyst app. Each release declares i
 
 | SDK version | Minimum Nimbalyst app version |
 | --- | --- |
-| 0.1.2 | 0.58.5 |
+| 0.1.3 | 0.58.5 |
 | 0.1.0 | 0.58.5 |
 
 ## [Unreleased]
 
-## [0.1.2]
+## [0.1.3]
 
 First release published via GitHub Actions Trusted Publishing (OIDC). No API changes from 0.1.0.
 
-(0.1.1 was tagged but never reached the registry — the workflow's earlier setup-node `registry-url` configuration prevented the OIDC fallback. That tag has been retired.)
+(0.1.1 and 0.1.2 were tagged but never reached the registry while we were diagnosing the publish workflow. Those tags have been retired.)
 
 ## [0.1.0] - Initial release
 

@@ -30,15 +30,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          # Node 24 ships with npm >= 11.5.1, which is required for Trusted
+          # Publishing. Earlier majors need an `npm install -g npm@latest`
+          # upgrade step that hits a known self-replace bug on the runner.
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
         # NOTE: deliberately omit `registry-url`. setup-node would otherwise
         # write `_authToken=${NODE_AUTH_TOKEN}` into a generated .npmrc, which
         # blocks npm from falling back to OIDC Trusted Publishing on publish.
-
-      - name: Upgrade npm for Trusted Publishing
-        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
