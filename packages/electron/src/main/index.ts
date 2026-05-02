@@ -63,8 +63,10 @@ import {
     clearPendingThemeFallback,
     updateWorkspaceState,
     runMigrations,
-    getAppSetting
+    getAppSetting,
+    store
 } from './utils/store';
+import { getAIProviderOverridesWithWorktreeFallback } from './utils/aiSettingsMerge';
 import { registerMCPConfigHandlers } from './ipc/MCPConfigHandlers';
 import { getOpenCodeConfigService, registerOpenCodeConfigHandlers } from './ipc/OpenCodeConfigHandlers';
 import { registerClaudeCodePluginHandlers } from './ipc/ClaudeCodePluginHandlers';
@@ -1676,20 +1678,22 @@ app.whenReady().then(async () => {
     markEnd('session-restore');
 
     // Set up a loader that reads customClaudeCodePath fresh from the store on each query,
-    // so changes in the UI take effect without restarting the app. Project-level overrides
-    // take precedence over the global value when a workspace path is provided.
-    const { store } = await import('./utils/store');
-    const { getAIProviderOverridesWithWorktreeFallback } = await import('./utils/aiSettingsMerge');
-    ClaudeCodeProvider.setCustomClaudeCodePathLoader((workspacePath?: string) => {
-      const globalPath = (store.get('customClaudeCodePath', '') as string) || '';
+    // so changes in the UI take effect without restarting the app. The workspace path is
+    // required: getAIProviderOverridesWithWorktreeFallback handles direct overrides plus
+    // worktree-to-parent inheritance. Only fall through to the global setting when no
+    // project-level override exists at all (which is the intended fallback, not a routing
+    // failure). A missing workspacePath here would mean an upstream wiring bug, so throw.
+    ClaudeCodeProvider.setCustomClaudeCodePathLoader((workspacePath: string) => {
       if (!workspacePath) {
-        return globalPath;
+        throw new Error('[ClaudeCodeProvider] customClaudeCodePathLoader called without a workspacePath');
       }
-      const overrides = getAIProviderOverridesWithWorktreeFallback(workspacePath);
-      if (overrides?.customClaudeCodePath !== undefined) {
-        return overrides.customClaudeCodePath;
+
+      const projectOverride = getAIProviderOverridesWithWorktreeFallback(workspacePath)?.customClaudeCodePath;
+      if (projectOverride !== undefined) {
+        return projectOverride;
       }
-      return globalPath;
+
+      return (store.get('customClaudeCodePath', '') as string) || '';
     });
     logger.main.info('[ClaudeCodeProvider] Initialized customClaudeCodePath loader (workspace-aware)');
 
