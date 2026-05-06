@@ -122,6 +122,57 @@ describe('ToolCallMatcher', () => {
       expect(windows[0].argsText).toContain('b.ts');
     });
 
+    it('should prefer synthetic Codex editGroupId from raw message metadata', () => {
+      const content = JSON.stringify({
+        type: 'item.completed',
+        item: {
+          type: 'file_change',
+          id: 'item_3',
+          changes: [
+            { path: '/workspace/src/a.ts', kind: 'update' },
+          ],
+        },
+      });
+
+      const windows = parseToolCallWindows(
+        12,
+        content,
+        baseDate,
+        SESSION_ID,
+        '/workspace',
+        { editGroupId: 'nimtc|item_3|1700000000000|9' },
+      );
+
+      expect(windows).toHaveLength(1);
+      expect(windows[0].toolCallItemId).toBe('item_3');
+      expect(windows[0].toolUseId).toBe('nimtc|item_3|1700000000000|9');
+    });
+
+    it('should ignore non-synthetic editGroupId metadata', () => {
+      const content = JSON.stringify({
+        type: 'item.completed',
+        item: {
+          type: 'file_change',
+          id: 'item_7',
+          changes: [
+            { path: '/workspace/src/a.ts', kind: 'update' },
+          ],
+        },
+      });
+
+      const windows = parseToolCallWindows(
+        13,
+        content,
+        baseDate,
+        SESSION_ID,
+        '/workspace',
+        { editGroupId: 'item_7' },
+      );
+
+      expect(windows).toHaveLength(1);
+      expect(windows[0].toolUseId).toBe('item_7');
+    });
+
     it('should include output text from tool results', () => {
       const content = JSON.stringify({
         type: 'item.completed',

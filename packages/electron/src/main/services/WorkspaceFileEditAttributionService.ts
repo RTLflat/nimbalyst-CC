@@ -25,6 +25,7 @@ interface WorkspaceQueueState {
 const EVENT_DEDUPE_WINDOW_MS = 250;
 const EVENT_TTL_MS = 30_000;
 const MAX_QUEUE_SIZE = 500;
+const CODEX_WINDOW_SETTLE_MS = 40;
 
 /** Per-workspace attribution counters for observability. */
 interface AttributionCounters {
@@ -168,6 +169,27 @@ class WorkspaceFileEditAttributionServiceImpl {
     return `watcher-${hash}`;
   }
 
+  private findCodexWindowMatch(
+    candidateSessionIds: string[],
+    event: WorkspaceFileEditEvent,
+  ): { sessionId: string; editGroupId: string; toolName: string } | null {
+    for (const sessionId of candidateSessionIds) {
+      const window = codexEditWindowRegistry.findWindowForEdit({
+        sessionId,
+        workspacePath: event.workspacePath,
+        fileTimestamp: event.timestamp,
+      });
+      if (window) {
+        return {
+          sessionId: window.sessionId,
+          editGroupId: window.editGroupId,
+          toolName: window.toolName,
+        };
+      }
+    }
+    return null;
+  }
+
   private async processQueue(workspacePath: string): Promise<void> {
     const state = this.stateByWorkspace.get(workspacePath);
     if (!state || state.processing) return;
@@ -203,21 +225,14 @@ class WorkspaceFileEditAttributionServiceImpl {
       // edit-group ID directly. This guarantees the same `nimtc|...` ID lands
       // on the session_files row, the pre-edit history tag, and the canonical
       // tool_call event.
-      let codexWindowMatch: { sessionId: string; editGroupId: string; toolName: string } | null = null;
-      for (const sessionId of candidateSessionIds) {
-        const window = codexEditWindowRegistry.findWindowForEdit({
-          sessionId,
-          workspacePath: event.workspacePath,
-          fileTimestamp: event.timestamp,
-        });
-        if (window) {
-          codexWindowMatch = {
-            sessionId: window.sessionId,
-            editGroupId: window.editGroupId,
-            toolName: window.toolName,
-          };
-          break;
-        }
+      let codexWindowMatch = this.findCodexWindowMatch(candidateSessionIds, event);
+      if (!codexWindowMatch) {
+        // Codex writes can hit disk a few milliseconds before the parsed
+        // file_change tool_call opens its edit window. Give that exact-match
+        // path a brief chance before we fall back to the fuzzy matcher, which
+        // can otherwise steal the edit for a nearby Bash command.
+        await new Promise((resolve) => setTimeout(resolve, CODEX_WINDOW_SETTLE_MS));
+        codexWindowMatch = this.findCodexWindowMatch(candidateSessionIds, event);
       }
 
       const matchResult = codexWindowMatch

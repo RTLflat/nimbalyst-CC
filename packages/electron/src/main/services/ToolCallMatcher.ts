@@ -109,6 +109,7 @@ interface AgentMessageRow {
   id: number;
   content: string;
   created_at_ms: number;
+  metadata?: unknown;
 }
 
 interface ToolCallMatchRow {
@@ -286,6 +287,17 @@ function stringifyOutput(output: any): string {
   return String(output);
 }
 
+function extractSyntheticEditGroupId(rawMetadata: unknown): string | null {
+  if (!rawMetadata || typeof rawMetadata !== 'object') {
+    return null;
+  }
+  const editGroupId = (rawMetadata as { editGroupId?: unknown }).editGroupId;
+  if (typeof editGroupId === 'string' && editGroupId.startsWith('nimtc|')) {
+    return editGroupId;
+  }
+  return null;
+}
+
 /**
  * Parse an ai_agent_messages content string to extract tool call windows.
  */
@@ -294,7 +306,8 @@ export function parseToolCallWindows(
   content: string,
   createdAt: Date,
   sessionId: string,
-  workspacePath?: string
+  workspacePath?: string,
+  rawMetadata?: unknown,
 ): ToolCallWindow[] {
   const windows: ToolCallWindow[] = [];
 
@@ -403,8 +416,9 @@ export function parseToolCallWindows(
 
   // Get item ID and tool use ID
   const itemId = typeof item.id === 'string' ? item.id : null;
-  const toolUseId = typeof item.tool_use_id === 'string' ? item.tool_use_id :
-    typeof item.id === 'string' ? item.id : null;
+  const toolUseId = extractSyntheticEditGroupId(rawMetadata)
+    ?? (typeof item.tool_use_id === 'string' ? item.tool_use_id :
+      typeof item.id === 'string' ? item.id : null);
 
   windows.push({
     messageId,
@@ -467,7 +481,7 @@ export async function getRawToolCallWindows(
     }
 
     const messagesResult = await database.query<AgentMessageRow>(
-      `SELECT id, content, EXTRACT(EPOCH FROM created_at) * 1000 AS created_at_ms
+      `SELECT id, content, metadata, EXTRACT(EPOCH FROM created_at) * 1000 AS created_at_ms
        FROM ai_agent_messages
        WHERE ${conditions.join(' AND ')}
        ORDER BY id ASC`,
@@ -482,6 +496,7 @@ export async function getRawToolCallWindows(
         new Date(ensureNumber(msg.created_at_ms)),
         sessionId,
         workspacePath,
+        msg.metadata,
       );
       windows.push(...msgWindows);
     }
@@ -522,7 +537,7 @@ async function getRawToolCallWindowsMultiSession(
     }
 
     const messagesResult = await database.query<AgentMessageRow & { session_id: string }>(
-      `SELECT session_id, id, content, EXTRACT(EPOCH FROM created_at) * 1000 AS created_at_ms
+      `SELECT session_id, id, content, metadata, EXTRACT(EPOCH FROM created_at) * 1000 AS created_at_ms
        FROM ai_agent_messages
        WHERE ${conditions.join(' AND ')}
        ORDER BY id ASC`,
@@ -536,6 +551,8 @@ async function getRawToolCallWindowsMultiSession(
         msg.content,
         new Date(ensureNumber(msg.created_at_ms)),
         msg.session_id,
+        undefined,
+        msg.metadata,
       );
       for (const w of msgWindows) {
         let arr = result.get(msg.session_id);
