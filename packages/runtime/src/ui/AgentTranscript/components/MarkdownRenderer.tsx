@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -130,12 +130,66 @@ if (typeof document !== 'undefined') {
   injectMarkdownRendererStyles();
 }
 
+// Wrap preference for transcript code blocks, persisted across remounts.
+// react-markdown re-renders on every streaming chunk and reconciles by
+// sibling index, not content, so a code block whose position shifts (a new
+// paragraph appears above it, a message appends, etc.) gets unmounted and
+// remounted with fresh local state. That's the "wrap deselects itself"
+// symptom.
+//
+// Identity is keyed by `${messageId}:${nodeOffset}`. The message id is
+// passed in from MessageSegment; node.position.start.offset comes from
+// react-markdown's override API and is the byte offset of the code fence
+// in the original markdown source. Together they're stable from first
+// render through end of stream, which closes the early-streaming hole
+// that a content-prefix key would leave open. Falls back to a counter
+// for callers that don't have a message id (NewFilePreview, tool result
+// renderers, etc.) so the cache still helps in those paths without
+// risking cross-message bleed (counter values are uniquely allocated
+// per mount, so the only carrier of state restoration in the fallback
+// path is the same-instance re-render case).
+const WRAP_PREFERENCE_CAP = 200;
+const wrapPreferenceByKey = new Map<string, boolean>();
+
+function setWrapPreference(key: string, value: boolean) {
+  if (!key) return;
+  if (wrapPreferenceByKey.has(key)) {
+    wrapPreferenceByKey.delete(key);
+  } else if (wrapPreferenceByKey.size >= WRAP_PREFERENCE_CAP) {
+    const firstKey = wrapPreferenceByKey.keys().next().value;
+    if (firstKey !== undefined) wrapPreferenceByKey.delete(firstKey);
+  }
+  wrapPreferenceByKey.set(key, value);
+}
+
+let _wrapFallbackCounter = 0;
+function nextFallbackKey(): string {
+  _wrapFallbackCounter += 1;
+  return `cb:fallback:${_wrapFallbackCounter}`;
+}
+
 // Wrapper for any element that might overflow horizontally.
 // Uses IntersectionObserver to defer scrollWidth measurement until visible,
 // and ResizeObserver to re-check on size changes - avoids forced reflow during
 // initial session load when many code blocks render off-screen.
-const OverflowWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [wordWrap, setWordWrap] = useState(false);
+const OverflowWrapper: React.FC<{
+  children: React.ReactNode;
+  /** Stable id for wrap-preference persistence across remounts. Compose
+   *  from messageId + AST node offset at the call site. */
+  persistKey?: string;
+}> = ({ children, persistKey }) => {
+  // Freeze the key once per mount so the same wrap-preference slot is used
+  // for the lifetime of this instance. Re-mounts re-evaluate useMemo and
+  // pick up the persisted preference (if any) for the resolved key.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const wrapKey = useMemo(() => persistKey || nextFallbackKey(), []);
+  const [wordWrap, setWordWrapState] = useState<boolean>(
+    () => wrapPreferenceByKey.get(wrapKey) ?? false
+  );
+  const setWordWrap = useCallback((next: boolean) => {
+    setWordWrapState(next);
+    setWrapPreference(wrapKey, next);
+  }, [wrapKey]);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const hasBeenVisible = useRef(false);
@@ -207,6 +261,10 @@ interface MarkdownRendererProps {
   onOpenFile?: (filePath: string) => void;
   /** Optional: Navigate to a session by ID (for @@session reference links) */
   onOpenSession?: (sessionId: string) => void;
+  /** Optional: Stable identifier (typically the message id) used to scope
+   *  per-block UI preferences (e.g. the OverflowWrapper Wrap toggle) so
+   *  preferences survive react-markdown remounts during streaming. */
+  messageId?: string | number;
 }
 
 function safeDecodeURIComponent(value: string): string {
@@ -300,8 +358,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   isUser = false,
   isSystemMessage = false,
   onOpenFile,
-  onOpenSession
+  onOpenSession,
+  messageId
 }) => {
+  // Stable per-block key for the OverflowWrapper wrap-preference cache.
+  // Combines the message id (so different messages can never share a slot)
+  // with the source-position offset of the code-fence node in the parsed
+  // markdown AST (so different blocks within the same message also don't
+  // share). react-markdown 10 passes the AST node to each override.
+  const codeBlockPersistKey = useCallback((node: unknown): string | undefined => {
+    if (messageId == null) return undefined;
+    const offset = (node as { position?: { start?: { offset?: number } } } | null | undefined)
+      ?.position?.start?.offset;
+    if (typeof offset !== 'number') return undefined;
+    return `cb:${String(messageId)}:${offset}`;
+  }, [messageId]);
   return (
     <div
       className={`markdown-content text-[0.9375rem] leading-relaxed max-w-full overflow-x-hidden break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 ${isUser ? 'font-medium' : 'font-normal'} ${isSystemMessage ? 'opacity-85 font-mono text-[0.95em]' : ''}`}
@@ -370,7 +441,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 </SyntaxHighlighter>
               );
               // Only wrap multi-line blocks with OverflowWrapper
-              return isSingleLine ? syntaxBlock : <OverflowWrapper>{syntaxBlock}</OverflowWrapper>;
+              return isSingleLine
+                ? syntaxBlock
+                : <OverflowWrapper persistKey={codeBlockPersistKey(node)}>{syntaxBlock}</OverflowWrapper>;
             }
 
             // Code block without language
@@ -389,7 +462,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               </code>
             );
             // Only wrap multi-line blocks with OverflowWrapper
-            return isSingleLine ? codeBlock : <OverflowWrapper>{codeBlock}</OverflowWrapper>;
+            return isSingleLine
+              ? codeBlock
+              : <OverflowWrapper persistKey={codeBlockPersistKey(node)}>{codeBlock}</OverflowWrapper>;
           },
           // Remove default pre wrapper - we handle styling in code component
           pre: ({ children }) => <>{children}</>,
