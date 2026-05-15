@@ -1309,6 +1309,138 @@
   word-break: break-all;
 }
 
+.git-output-line--more {
+  color: var(--nim-text-faint);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.git-output-error-actions {
+  padding-left: 70px;
+  margin-top: 4px;
+  display: flex;
+  gap: 6px;
+}
+
+.git-output-action-btn {
+  background: var(--nim-bg-tertiary);
+  border: 1px solid var(--nim-border);
+  color: var(--nim-text-muted);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.git-output-action-btn:hover {
+  background: var(--nim-bg-active, var(--nim-bg-tertiary));
+  color: var(--nim-text);
+  border-color: var(--nim-text-faint);
+}
+
+/* ===================== Error Detail Popup ===================== */
+.git-error-popup-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.git-error-popup {
+  background: var(--nim-bg);
+  border: 1px solid var(--nim-border);
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.git-error-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--nim-border);
+  background: var(--nim-bg-secondary);
+  flex-shrink: 0;
+}
+
+.git-error-popup-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.git-error-popup-label {
+  color: var(--nim-error, #ef4444);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.git-error-popup-command {
+  color: var(--nim-text);
+  font-family: var(--nim-font-mono, monospace);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-error-popup-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.git-error-popup-btn {
+  background: var(--nim-bg-tertiary);
+  border: 1px solid var(--nim-border);
+  color: var(--nim-text-muted);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.git-error-popup-btn:hover {
+  background: var(--nim-bg-active, var(--nim-bg-tertiary));
+  color: var(--nim-text);
+  border-color: var(--nim-text-faint);
+}
+
+.git-error-popup-btn--close {
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 8px;
+}
+
+.git-error-popup-body {
+  margin: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  font-family: var(--nim-font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--nim-error, #ef4444);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+  flex: 1;
+}
+
 .git-output-status {
   padding-left: 70px;
   font-size: 11px;
