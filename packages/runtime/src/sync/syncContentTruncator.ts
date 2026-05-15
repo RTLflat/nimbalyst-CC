@@ -246,11 +246,11 @@ class SyncTruncationTracker {
     // Lead with the big-picture line so the answer to "is my saving big or
     // small in context?" is the first thing you see.
     // eslint-disable-next-line no-console
-    console.log(
-      `[CollabV3] sync footprint: ${s.totalMessages} msgs, ` +
-        `raw=${formatBytes(s.totalBytesBefore)} → on-wire=${formatBytes(s.totalBytesAfter)} ` +
-        `(saved ${formatBytes(saved)}, ${pct.toFixed(1)}%)`,
-    );
+    // console.log(
+    //   `[CollabV3] sync footprint: ${s.totalMessages} msgs, ` +
+    //     `raw=${formatBytes(s.totalBytesBefore)} → on-wire=${formatBytes(s.totalBytesAfter)} ` +
+    //     `(saved ${formatBytes(saved)}, ${pct.toFixed(1)}%)`,
+    // );
 
     // Per-source breakdown. Sorted by raw bytes so the heaviest source is
     // first; makes it obvious if e.g. codex is dominating untruncated.
@@ -268,18 +268,18 @@ class SyncTruncationTracker {
         })
         .join(' | ');
       // eslint-disable-next-line no-console
-      console.log(`[CollabV3] sync footprint by source: ${formatted}`);
+      // console.log(`[CollabV3] sync footprint by source: ${formatted}`);
     }
 
     if (s.blocksTruncated > 0) {
       const buckets = s.blockSizeBuckets;
       // eslint-disable-next-line no-console
-      console.log(
-        `[CollabV3] sync truncations: ${s.messagesWithTruncation} msgs hit, ` +
-          `${s.blocksTruncated} blocks trimmed, max single block elided ${formatBytes(s.largestBlockElidedBytes)} | ` +
-          `pre-trim block sizes [8-32K:${buckets['8K-32K']} 32-128K:${buckets['32K-128K']} ` +
-          `128K-1M:${buckets['128K-1M']} 1-10M:${buckets['1M-10M']} >10M:${buckets['>10M']}]`,
-      );
+      // console.log(
+      //   `[CollabV3] sync truncations: ${s.messagesWithTruncation} msgs hit, ` +
+      //     `${s.blocksTruncated} blocks trimmed, max single block elided ${formatBytes(s.largestBlockElidedBytes)} | ` +
+      //     `pre-trim block sizes [8-32K:${buckets['8K-32K']} 32-128K:${buckets['32K-128K']} ` +
+      //     `128K-1M:${buckets['128K-1M']} 1-10M:${buckets['1M-10M']} >10M:${buckets['>10M']}]`,
+      // );
     }
   }
 
@@ -423,11 +423,11 @@ export function truncateContentForSync(
   // running-totals suffix gives a "is this a drop in the bucket or huge"
   // sense without having to wait for the periodic rollup line.
   // eslint-disable-next-line no-console
-  console.log(
-    `[CollabV3] sync-truncation: msg ${formatBytes(stats.bytesBefore)} → ${formatBytes(stats.bytesAfter)} ` +
-      `(saved ${formatBytes(stats.elidedBytes)} across ${stats.blocksTruncated} block(s)) | ` +
-      syncTruncationTracker.runningTotalsString(),
-  );
+  // console.log(
+  //   `[CollabV3] sync-truncation: msg ${formatBytes(stats.bytesBefore)} → ${formatBytes(stats.bytesAfter)} ` +
+  //     `(saved ${formatBytes(stats.elidedBytes)} across ${stats.blocksTruncated} block(s)) | ` +
+  //     syncTruncationTracker.runningTotalsString(),
+  // );
 
   return { content: newContent, stats };
 }
