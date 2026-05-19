@@ -39,6 +39,10 @@ import mockRegistry from '../data/extensionRegistry.json';
 // Live registry URL -- served by the marketplace Cloudflare Worker
 const REGISTRY_URL = 'https://extensions.nimbalyst.com/registry';
 
+const RENAMED_EXTENSION_IDS: Record<string, string> = {
+  'com.developer.nimbalyst-mindmap': 'com.nimbalyst.mindmap',
+};
+
 // Registry cache
 let registryCache: RegistryData | null = null;
 let registryCacheTimestamp = 0;
@@ -566,40 +570,25 @@ async function installFromGitHubCloneSource(
     const extensionId = manifest.id;
     const installPath = path.join(extensionsDir, extensionId);
 
-    // Remove any existing installation
-    await fs.rm(installPath, { recursive: true, force: true });
-
-    // Copy to extensions directory (excluding .git and node_modules)
-    progress({ stage: 'installing', message: `Installing ${extensionId}...` });
-    await copyDirectory(sourceDir, installPath);
-
+    // Validate dist/ on the clone (sourceDir) BEFORE touching any existing
+    // installation, so a failed install doesn't brick a working extension.
     // Theme-only / claudePlugin-only extensions have no JS to run, so dist/
     // is not required. Mirrors onlyThemes / onlyClaudePlugin in ExtensionLoader.ts.
     if (!isManifestOnlyExtension(manifest)) {
-      // Check if there's a dist/ directory; if not, surface the error to the
-      // user rather than silently registering an extension that cannot load.
       // Auto-building is intentionally deferred (slow, error-prone, runs
       // arbitrary npm scripts), so we ask the user to publish a release
       // or build locally first.
-      const distPath = path.join(installPath, 'dist');
+      const distPath = path.join(sourceDir, 'dist');
       try {
         await fs.access(distPath);
       } catch {
-        const pkgJsonPath = path.join(installPath, 'package.json');
+        const pkgJsonPath = path.join(sourceDir, 'package.json');
         let hasPkgJson = false;
         try {
           await fs.access(pkgJsonPath);
           hasPkgJson = true;
         } catch {
           // No package.json either - extension might be pre-built or malformed
-        }
-
-        // Clean up the partially-installed extension directory so the user
-        // can retry from a fresh state.
-        try {
-          await fs.rm(installPath, { recursive: true, force: true });
-        } catch (cleanupErr) {
-          logger.main.warn(`[ExtMarketplace] Failed to clean up ${installPath} after dist/ check:`, cleanupErr);
         }
 
         const message = hasPkgJson
@@ -609,6 +598,11 @@ async function installFromGitHubCloneSource(
         return { success: false, error: message };
       }
     }
+
+    // Validation passed -- safe to replace any existing installation.
+    progress({ stage: 'installing', message: `Installing ${extensionId}...` });
+    await fs.rm(installPath, { recursive: true, force: true });
+    await copyDirectory(sourceDir, installPath);
 
     // Track the install
     addMarketplaceInstall({
@@ -708,6 +702,71 @@ async function checkForUpdates(): Promise<Array<{ extensionId: string; currentVe
   return updates;
 }
 
+async function migrateRenamedExtensions(registry: RegistryData): Promise<void> {
+  const installs = getMarketplaceInstalls();
+  const extensionsDir = await getUserExtensionsDirectory();
+
+  for (const [legacyId, replacementId] of Object.entries(RENAMED_EXTENSION_IDS)) {
+    const legacyInstallPath = path.join(extensionsDir, legacyId);
+    const replacementInstallPath = path.join(extensionsDir, replacementId);
+    const legacyRecord = installs[legacyId];
+
+    let legacyInstalledOnDisk = false;
+    try {
+      await fs.access(legacyInstallPath);
+      legacyInstalledOnDisk = true;
+    } catch {
+      legacyInstalledOnDisk = false;
+    }
+
+    if (!legacyInstalledOnDisk && !legacyRecord) {
+      continue;
+    }
+
+    let replacementInstalledOnDisk = false;
+    try {
+      await fs.access(replacementInstallPath);
+      replacementInstalledOnDisk = true;
+    } catch {
+      replacementInstalledOnDisk = false;
+    }
+
+    const replacementRecord = installs[replacementId];
+    if (!replacementInstalledOnDisk && !replacementRecord) {
+      const replacementEntry = registry.extensions.find((entry) => entry.id === replacementId);
+      if (!replacementEntry?.downloadUrl) {
+        logger.main.warn(
+          `[ExtMarketplace] Cannot migrate legacy extension ${legacyId} -> ${replacementId}: replacement missing from registry`
+        );
+        continue;
+      }
+
+      const result = await installFromUrl(
+        replacementId,
+        replacementEntry.downloadUrl,
+        replacementEntry.checksum,
+        replacementEntry.version,
+      );
+      if (!result.success) {
+        logger.main.warn(
+          `[ExtMarketplace] Failed to migrate legacy extension ${legacyId} -> ${replacementId}: ${result.error ?? 'unknown error'}`
+        );
+        continue;
+      }
+    }
+
+    try {
+      await fs.rm(legacyInstallPath, { recursive: true, force: true });
+    } catch (err) {
+      logger.main.warn(`[ExtMarketplace] Failed to remove legacy extension directory ${legacyId}:`, err);
+    }
+    removeMarketplaceInstall(legacyId);
+    await initializeExtensionFileTypes();
+    notifyExtensionUnloaded(legacyId);
+    logger.main.info(`[ExtMarketplace] Migrated legacy extension ${legacyId} -> ${replacementId}`);
+  }
+}
+
 /**
  * Send IPC event to all renderer windows that extensions have changed.
  * If extensionId and extensionPath are provided, also triggers a hot-reload
@@ -756,10 +815,12 @@ export function queueMarketplaceInstallRequest(extensionId: string): void {
  */
 export async function runExtensionAutoUpdate(): Promise<void> {
   try {
+    const registry = await fetchRegistry();
+    await migrateRenamedExtensions(registry);
+
     const updates = await checkForUpdates();
     if (updates.length === 0) return;
 
-    const registry = await fetchRegistry();
     for (const update of updates) {
       const entry = registry.extensions.find(e => e.id === update.extensionId);
       if (!entry?.downloadUrl) continue;
