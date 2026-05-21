@@ -23,11 +23,11 @@ const {
   mockApplyHeadlessBodyMarkdown: vi.fn(async () => undefined),
   mockDocumentServices: new Map<string, any>(),
   mockDocService: {
-    getTrackerItemById: vi.fn(async () => null),
-    listTrackerItems: vi.fn(async () => []),
-    ensureTrackerProjection: vi.fn(async (itemId: string) => null),
-    updateTrackerItemInFile: vi.fn(async () => null),
-    archiveTrackerItem: vi.fn(async () => null),
+    getTrackerItemById: vi.fn<(...args: any[]) => Promise<any>>(async () => null),
+    listTrackerItems: vi.fn<(...args: any[]) => Promise<any[]>>(async () => []),
+    ensureTrackerProjection: vi.fn<(...args: any[]) => Promise<any>>(async () => null),
+    updateTrackerItemInFile: vi.fn<(...args: any[]) => Promise<any>>(async () => null),
+    archiveTrackerItem: vi.fn<(...args: any[]) => Promise<any>>(async () => null),
     destroy: vi.fn(),
   },
 }));

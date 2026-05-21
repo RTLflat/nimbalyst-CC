@@ -892,8 +892,9 @@ export async function handleTrackerList(
     const rawItems = docService ? await docService.listTrackerItems() : [];
 
     const getFieldValue = (item: TrackerItem, field: string): unknown => {
-      if ((item as Record<string, unknown>)[field] !== undefined) {
-        return (item as Record<string, unknown>)[field];
+      const record = item as unknown as Record<string, unknown>;
+      if (record[field] !== undefined) {
+        return record[field];
       }
       return item.customFields?.[field];
     };

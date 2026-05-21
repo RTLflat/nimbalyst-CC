@@ -10,8 +10,8 @@ describe('buildClaudeCodeSystemPrompt', () => {
     expect(prompt).toContain('## Interactive User Input');
     expect(prompt).toContain('`AskUserQuestion` (server: `nimbalyst-mcp`)');
     expect(prompt).toContain('`PromptForUserInput` (server: `nimbalyst-mcp`)');
-    expect(prompt).toContain('do not guess');
-    expect(prompt).toContain('Wait for the tool result before continuing');
+    expect(prompt).toContain('call an interactive tool instead');
+    expect(prompt).toContain('Combine multiple questions into one multi-field prompt');
   });
 
   it('formats interactive input tool references for claude-style prompts', () => {

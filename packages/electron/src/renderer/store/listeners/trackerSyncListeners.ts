@@ -42,7 +42,7 @@ const ROTATION_LOCKED_TTL_MS = 30_000;
  */
 async function loadAllTrackerItems(): Promise<void> {
   try {
-    const items = await window.electronAPI.invoke('document-service:tracker-items-list') as Promise<TrackerItem[]>;
+    const items = await window.electronAPI.invoke('document-service:tracker-items-list') as TrackerItem[];
     const records = (items || []).map(trackerItemToRecord);
     store.set(replaceAllTrackerItemsAtom, records);
   } catch (err) {
