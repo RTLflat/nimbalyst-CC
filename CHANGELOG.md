@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Imported Claude Code sessions are labelled with the model actually used (per-turn `model` from the JSONL), not always Sonnet. (#394)
 - Transcript, model-picker, session-history, and shared editor dropdown menus now use floating-ui portals so they stay visible instead of clipping inside panels.
 - Agent transcript no longer repaints on every streamed token or keystroke, so text selection inside running sessions stays usable.
+- Dev-mode transcript reprocess now refreshes transcript views without marking sessions unread, and child session context menus under workstreams and blitz worktrees now use the shared session actions.
 
 ### Removed
 <!-- Removed features go here -->
