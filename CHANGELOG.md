@@ -11,12 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Shared documents have revision history: Cmd/Ctrl+S saves a named version, auto snapshots run after idle, and any past revision can be restored from the History dialog.
 - Custom shared-document editors can publish history controllers so the global History dialog can route to collaborative revisions.
+- Extensions SDK permissions and backend modules
+- Extension panels can run read-only SQL via `host.data.query()` against the local PGLite store when the manifest declares `nimbalyst-database-read` in `permissions.catalog`.
+- Backend-module allowlist: only built-in extensions, curated marketplace ids, and dev-installed extensions with `NIMBALYST_ALLOW_DEV_BACKEND_MODULES=1` can ship native-code backends.
 <!-- New features go here -->
 
 ### Changed
 <!-- Changes to existing functionality go here -->
 - Auto-update now downloads in the background and shows only the "Ready to install" toast; the redundant "Update Available" toast has been removed. (#327)
 - Extension docs now cover all four markdown/transcript contribution surfaces in both the internal architecture doc and the public SDK docs, including declarative module exports, diff handlers, transcript renderer hooks, and the current `@nimbalyst/runtime` import surface.
+- Backend-module consent prompt now leads with an explicit "this extension will run native code on your computer" banner; granular catalog ids only cover host-brokered services.
+
+### Removed
+- Catalog permission ids `spawn-process`, `network-loopback`, `network-internet`, and `filesystem` were unenforceable inside a Node backend (the module can `require('child_process')` directly) and are no longer accepted. Manifests that still list them load with a non-fatal warning; the ids are silently dropped when computing effective permissions.
 
 ### Fixed
 - Files Mode editor now surfaces AI edits to blockquote lines as red/green diffs, the same as plain paragraphs. (#433)
@@ -32,9 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Slash-command typeahead now lists commands and skills from Claude CLI plugins (`~/.claude/plugins/`) without requiring the experimental "Agent Workflows" toggle, matching what the Claude Agent SDK auto-loads from `enabledPlugins`.
 - Excalidraw "import mermaid" now registers the rendered diagram image, so it no longer shows as a broken thumbnail. (#428)
 - Codex sessions now append actionable guidance when `~/.codex/config.toml` has a url-based MCP server the bundled Codex rejects, instead of an opaque config-load failure. (#424)
-
-### Removed
-<!-- Removed features go here -->
 
 ## [0.61.1] - 2026-05-21
 

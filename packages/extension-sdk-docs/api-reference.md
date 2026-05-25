@@ -414,6 +414,7 @@ interface PanelHost {
   readonly isSettingsOpen: boolean;
   readonly ai?: PanelAIContext;
   readonly storage: ExtensionStorage;
+  readonly data: ExtensionDataAccess;
 
   onThemeChanged(callback: (theme: string) => void): () => void;
   openFile(path: string): void;
@@ -421,8 +422,28 @@ interface PanelHost {
   close(): void;
   openSettings(): void;
   closeSettings(): void;
+  exec(command: string, options?: ExecOptions): Promise<ExecResult>;
 }
 ```
+
+### `ExtensionDataAccess`
+
+Read-only access to Nimbalyst's local PGLite database. Requires
+`"nimbalyst-database-read"` in `permissions.catalog` on the manifest.
+
+```ts
+interface ExtensionDataAccess {
+  // Run a read-only SQL query against the local PGLite database. The query
+  // is wrapped in a `READ ONLY` transaction with a 5s statement_timeout, so
+  // DML/DDL is rejected by the planner. Use `$1`, `$2`, ... placeholders.
+  query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
+}
+```
+
+Tables and columns are not part of any stable contract -- the surface is
+intended for built-in extensions and will be redesigned when Nimbalyst's
+storage layer ports to native SQLite. Pin to the host version you tested
+against.
 
 ```ts
 interface PanelAIContext {
@@ -501,8 +522,76 @@ interface ExtensionContributions {
   settingsPanel?: SettingsPanelContribution;
   documentHeaders?: DocumentHeaderContribution[];
   themes?: ThemeContribution[];
+  backendModules?: BackendModuleContribution[];
 }
 ```
+
+## Permissions and Backend Modules
+
+> The catalog and shape are evolving -- pin to specific SDK versions while
+> this stabilizes. See [permissions.md](./permissions.md) for the full
+> manifest format, consent flow, and runtime choice guidance.
+
+```ts
+import type {
+  BackendModuleContribution,
+  BackendModuleRuntime,
+  BackendModuleEnablement,
+  ExtensionPermissionId,
+  PermissionRiskTier,
+} from '@nimbalyst/extension-sdk';
+
+type BackendModuleRuntime = 'utility-process' | 'worker-thread';
+type PermissionRiskTier = 'low' | 'elevated' | 'high';
+
+type ExtensionPermissionId =
+  | 'workspace-files'
+  | 'nimbalyst-database-read'
+  | 'nimbalyst-database-write'
+  | 'secrets-read'
+  | 'mcp-server-register';
+
+interface BackendModuleEnablement {
+  default: 'disabled';
+  promptOn: 'firstUse';
+  purpose: string;
+}
+
+interface BackendModuleContribution {
+  id: string;
+  entry: string;
+  runtime: BackendModuleRuntime;
+  permissions: ExtensionPermissionId[];
+  enablement: BackendModuleEnablement;
+}
+```
+
+Manifest cap (also exported as a constant):
+
+```ts
+import { MAX_BACKEND_MODULES_PER_EXTENSION } from '@nimbalyst/extension-sdk';
+// 8
+```
+
+### Manifest Validation Helpers
+
+```ts
+import {
+  validateBackendModules,
+  assertBackendModulesValid,
+  type BackendModuleValidationIssue,
+} from '@nimbalyst/extension-sdk';
+
+// Pure check -- returns the list of issues (empty = valid)
+const issues = validateBackendModules(manifest.contributions?.backendModules);
+
+// Convenience wrapper -- throws if any issues are found
+assertBackendModulesValid(manifest.id, manifest.contributions?.backendModules);
+```
+
+`validateExtensionBundle()` already runs `validateBackendModules()` against
+the manifest it reads from disk; call the helpers directly only if you are
+validating a manifest you constructed in memory.
 
 ## Vite Helper
 
