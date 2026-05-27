@@ -35,6 +35,8 @@ import { WakeupBanner } from '../AIChat/WakeupBanner';
 import type { AIMode } from './ModeTag';
 // Note: ExitPlanMode, AskUserQuestion, and ToolPermission use inline widgets via InteractiveWidgetHost (in runtime package)
 import { SlashCommandSuggestions } from './SlashCommandSuggestions';
+import { InlineTipDisplay } from '../../tips/InlineTipDisplay';
+import { activeTipIdAtom } from '../../tips/atoms';
 import { supportsWorkspaceSlashCommands } from '../Typeahead/slashCommandAutocomplete';
 import type { TextSelection } from './TextSelectionIndicator';
 import { type SerializableDocumentContext } from '../../hooks/useDocumentContext';
@@ -1742,21 +1744,32 @@ export const SessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscr
     return userMessages[userMessages.length - 1].createdAt?.getTime() || null;
   }, [messages]);
 
-  // Slash command suggestions for empty sessions
+  // Extra content rendered in the empty-session panel: an inline contextual
+  // tip (any provider) above the slash command suggestions (claude-code
+  // only). InlineTipDisplay registers itself with TipProvider so tips only
+  // activate while this surface is mounted.
   const renderEmptyExtra = React.useCallback(() => {
-    if (provider !== 'claude-code' || messages.length > 0) {
-      return null;
-    }
+    if (messages.length > 0) return null;
     return (
-      <SlashCommandSuggestions
-        provider={provider}
-        hasMessages={messages.length > 0}
-        workspacePath={workspacePath}
-        sessionId={sessionId}
-        onCommandSelect={handleCommandSelect}
-      />
+      <div className="rich-transcript-empty-extras w-full max-w-[640px] flex flex-col items-center gap-6">
+        <InlineTipDisplay />
+        {provider === 'claude-code' && (
+          <SlashCommandSuggestions
+            provider={provider}
+            hasMessages={false}
+            workspacePath={workspacePath}
+            sessionId={sessionId}
+            onCommandSelect={handleCommandSelect}
+          />
+        )}
+      </div>
     );
   }, [provider, messages.length, workspacePath, sessionId, handleCommandSelect]);
+
+  // When a tip is being shown in the empty panel, hide the generic
+  // "ready to assist with" help block so the tip is the focal point.
+  const activeTipId = useAtomValue(activeTipIdAtom);
+  const hideEmptyHelp = activeTipId !== null && messages.length === 0;
 
   // Scroll-to-teammate: when the atom fires for this session, find the spawn
   // message and scroll the transcript to it.
@@ -2031,6 +2044,7 @@ export const SessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscr
               showSessionInit: false
             }}
             renderEmptyExtra={renderEmptyExtra}
+            hideEmptyHelp={hideEmptyHelp}
             isArchived={isArchived}
             onCloseAndArchive={handleCloseAndArchive}
             onUnarchive={handleUnarchive}

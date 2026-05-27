@@ -59,6 +59,12 @@ interface AgentTranscriptPanelProps {
   }) => React.ReactNode;
   /** Optional: render additional content in the empty state (e.g., command suggestions) */
   renderEmptyExtra?: () => React.ReactNode;
+  /**
+   * If true, suppress the default "ready to assist with" help block in the
+   * empty state. Hosts use this when `renderEmptyExtra` provides its own
+   * primary content (e.g. an inline tip card) that should stand on its own.
+   */
+  hideEmptyHelp?: boolean;
   /** Whether the session is archived */
   isArchived?: boolean;
   /** Optional callback to close and archive the session */
@@ -132,6 +138,7 @@ const AgentTranscriptPanelComponent = React.forwardRef<
   workspacePath: workspacePathProp,
   renderHeaderActions,
   renderEmptyExtra,
+  hideEmptyHelp,
   isArchived,
   onCloseAndArchive,
   onUnarchive,
@@ -378,6 +385,7 @@ const AgentTranscriptPanelComponent = React.forwardRef<
           documentContext={sessionData.documentContext}
           workspacePath={effectiveWorkspacePath}
           renderEmptyExtra={renderEmptyExtra}
+          hideEmptyHelp={hideEmptyHelp}
           readFile={readFile}
           onOpenFile={onFileClick}
           onOpenSession={onOpenSession}

@@ -1,8 +1,16 @@
 /**
  * TipProvider Component
  *
- * Evaluates tip trigger conditions on a timer and shows the highest-priority
+ * Evaluates tip trigger conditions on a timer and selects the highest-priority
  * eligible tip. Enforces session-based cooldown (one tip per app launch).
+ *
+ * Rendering policy (current):
+ *   Tips are rendered inline in the empty panel of new AI sessions via
+ *   `InlineTipDisplay` -- the floating bottom-left card from `TipCard` is
+ *   intentionally not rendered here. The floating implementation is kept
+ *   intact for a future surface. To avoid "burning" tips while no inline
+ *   surface is mounted, activation is gated on
+ *   `emptyTranscriptVisibleCountAtom > 0`.
  *
  * Shares persistence with the walkthrough system -- tip dismissed/completed
  * state is stored alongside walkthrough state via the same IPC channels.
@@ -18,7 +26,6 @@ import { hasActiveDialogsAtom } from '../contexts/DialogContext';
 import { hasVisibleOverlay, getWalkthroughState } from '../walkthroughs/WalkthroughService';
 import { store } from '@nimbalyst/runtime/store';
 import { shouldShowTip, markTipDismissed, markTipCompleted, recordTipShown, registerTipMenuEntries } from './TipService';
-import { TipCard } from './TipCard';
 import { tips } from './definitions';
 import {
   tipTriggerCommandAtom,
@@ -26,6 +33,7 @@ import {
 } from '../store/atoms/walkthroughCommands';
 import { errorNotificationService } from '../services/ErrorNotificationService';
 import { worktreesFeatureAvailableAtom } from '../store/atoms/appSettings';
+import { emptyTranscriptVisibleCountAtom } from './atoms';
 import type { FeatureUsageRecord } from '../../shared/featureUsage';
 
 /** Delay before first tip evaluation after app start */
@@ -228,6 +236,10 @@ export function TipProvider({ children, currentMode, workspacePath }: TipProvide
         if (isWalkthroughActiveRef.current) return;
         if (hasActiveDialogsRef.current || hasVisibleOverlay()) return;
         if (activeTipIdRef.current) return;
+        // Don't activate a tip if there's nowhere to render it. The floating
+        // card is disabled; tips currently render inline in empty AI
+        // transcripts, so wait until at least one such surface is mounted.
+        if (store.get(emptyTranscriptVisibleCountAtom) <= 0) return;
 
         const state = walkthroughStateRef.current;
         const mode = currentModeRef.current;
@@ -253,6 +265,7 @@ export function TipProvider({ children, currentMode, workspacePath }: TipProvide
 
           pendingDelayRef.current = setTimeout(() => {
             if (hasVisibleOverlay()) return;
+            if (store.get(emptyTranscriptVisibleCountAtom) <= 0) return;
             if (!tip.trigger.condition(buildTriggerContext())) return;
             showTipRef.current(tip);
           }, delay);
@@ -369,17 +382,9 @@ export function TipProvider({ children, currentMode, workspacePath }: TipProvide
     return undefined;
   }, [activeTipId, tipShownThisSession, walkthroughState, showTip, dismissTip]);
 
-  return (
-    <>
-      {children}
-      {activeTip && (
-        <TipCard
-          tip={activeTip}
-          onDismiss={dismissTip}
-          onAction={handleAction}
-          onSecondaryAction={activeTip.content.secondaryAction ? handleSecondaryAction : undefined}
-        />
-      )}
-    </>
-  );
+  // Rendering policy: the floating TipCard is intentionally not rendered
+  // here. Tips show inline in the empty panel of new AI sessions via
+  // `InlineTipDisplay` (see SessionTranscript's `renderEmptyExtra`). The
+  // floating implementation is preserved in TipCard for future use.
+  return <>{children}</>;
 }

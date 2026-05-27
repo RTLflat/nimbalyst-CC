@@ -433,6 +433,11 @@ interface RichTranscriptViewProps {
   workspacePath?: string;
   /** Optional: render additional content in the empty state (e.g., command suggestions) */
   renderEmptyExtra?: () => React.ReactNode;
+  /**
+   * If true, suppress the default "ready to assist with" help block in the
+   * empty state -- the host's `renderEmptyExtra` becomes the primary content.
+   */
+  hideEmptyHelp?: boolean;
   /** Optional: Read a file from the filesystem (for custom widgets that need to load persisted files) */
   readFile?: (filePath: string) => Promise<{ success: boolean; content?: string; error?: string }>;
   /** Optional: Open a file in the editor */
@@ -1021,7 +1026,7 @@ export const extractEditsFromToolMessage = (message: TranscriptViewMessage): any
 export const RichTranscriptView = React.forwardRef<
   { scrollToMessage: (index: number) => void; scrollToTop: () => void },
   RichTranscriptViewProps
->(({ sessionId, sessionStatus, isProcessing, hasPendingInteractivePrompt, messages, provider, settings: propsSettings, onSettingsChange, showSettings, documentContext, workspacePath, renderEmptyExtra, readFile, onOpenFile, onOpenSession, onCompact, promptAdditions, currentTeammates, waitingForNoun, appStartTime, getToolCallDiffs, renderEmbeddedFile, canEmbedFile, onSearchBarVisibilityChange, persistScrollState = true }, ref) => {
+>(({ sessionId, sessionStatus, isProcessing, hasPendingInteractivePrompt, messages, provider, settings: propsSettings, onSettingsChange, showSettings, documentContext, workspacePath, renderEmptyExtra, hideEmptyHelp, readFile, onOpenFile, onOpenSession, onCompact, promptAdditions, currentTeammates, waitingForNoun, appStartTime, getToolCallDiffs, renderEmbeddedFile, canEmbedFile, onSearchBarVisibilityChange, persistScrollState = true }, ref) => {
   const [collapsedMessages, setCollapsedMessages] = useState<Set<number>>(new Set());
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const scrollButtonRef = useRef<HTMLDivElement>(null);
@@ -2289,20 +2294,28 @@ export const RichTranscriptView = React.forwardRef<
         <div className={`rich-transcript-content mx-auto py-1 h-full ${settings.compactMode ? 'compact' : 'normal'}`}>
           {messages.length === 0 && !isWaitingForResponse ? (
             <div className="rich-transcript-empty flex flex-col items-center p-8 px-4 h-full max-w-4xl mx-auto">
-              <div className="rich-transcript-empty-content flex-1 flex flex-col justify-center max-w-[400px] text-left">
-                <div className="rich-transcript-empty-title text-[var(--nim-text-faint)] text-sm mb-2 leading-relaxed">
-                  {getProviderDisplayName(provider)} is ready to assist with:
+              {!hideEmptyHelp && (
+                <div className="rich-transcript-empty-content flex-1 flex flex-col justify-center max-w-[400px] text-left">
+                  <div className="rich-transcript-empty-title text-[var(--nim-text-faint)] text-sm mb-2 leading-relaxed">
+                    {getProviderDisplayName(provider)} is ready to assist with:
+                  </div>
+                  <ul className="rich-transcript-empty-capabilities list-none p-0 m-0 ml-6">
+                    <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">Web research</li>
+                    <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">Code analysis</li>
+                    <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">File editing</li>
+                  </ul>
+                  <div className="rich-transcript-empty-footer text-[var(--nim-text-faint)] text-sm mt-3 leading-relaxed">
+                    Enter a task below to get started
+                  </div>
                 </div>
-                <ul className="rich-transcript-empty-capabilities list-none p-0 m-0 ml-6">
-                  <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">Web research</li>
-                  <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">Code analysis</li>
-                  <li className="text-[var(--nim-text-faint)] text-sm py-1 pl-3 relative leading-relaxed before:content-['•'] before:absolute before:left-0 before:text-[var(--nim-text-faint)]">File editing</li>
-                </ul>
-                <div className="rich-transcript-empty-footer text-[var(--nim-text-faint)] text-sm mt-3 leading-relaxed">
-                  Enter a task below to get started
+              )}
+              {hideEmptyHelp ? (
+                <div className="rich-transcript-empty-extras-wrap flex-1 flex flex-col items-center justify-center w-full">
+                  {renderEmptyExtra?.()}
                 </div>
-              </div>
-              {renderEmptyExtra?.()}
+              ) : (
+                renderEmptyExtra?.()
+              )}
             </div>
           ) : !isContainerVisible ? (
             /* Skip VList rendering when container is hidden (display:none parent).

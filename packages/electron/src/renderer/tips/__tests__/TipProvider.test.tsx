@@ -8,8 +8,9 @@ import { store } from '../../store';
 import { hasActiveDialogsAtom } from '../../contexts/DialogContext';
 import { developerFeatureSettingsAtom, syncConfigAtom } from '../../store/atoms/appSettings';
 import { activeWalkthroughIdAtom, walkthroughStateAtom } from '../../walkthroughs/atoms';
-import { activeTipIdAtom, tipShownThisSessionAtom } from '../atoms';
+import { activeTipIdAtom, emptyTranscriptVisibleCountAtom, tipShownThisSessionAtom } from '../atoms';
 import { TipProvider } from '../TipProvider';
+import { InlineTipDisplay } from '../InlineTipDisplay';
 import { FEATURE_USAGE_KEYS } from '../../../shared/featureUsage';
 
 vi.mock('posthog-js/react', () => ({
@@ -47,6 +48,7 @@ describe('TipProvider', () => {
     store.set(hasActiveDialogsAtom, false);
     store.set(activeTipIdAtom, null);
     store.set(tipShownThisSessionAtom, false);
+    store.set(emptyTranscriptVisibleCountAtom, 0);
     store.set(syncConfigAtom, {
       ...store.get(syncConfigAtom),
       enabled: true,
@@ -64,7 +66,30 @@ describe('TipProvider', () => {
     delete (window as any).electronAPI;
   });
 
-  it('shows the mobile keep-awake tip when sync is enabled and keep-awake is off', async () => {
+  it('shows the mobile keep-awake tip inline when an empty transcript is visible', async () => {
+    render(
+      <JotaiProvider store={store as any}>
+        <TipProvider currentMode="files">
+          <InlineTipDisplay />
+        </TipProvider>
+      </JotaiProvider>
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(23_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('Keep your computer awake for mobile prompts')).toBeTruthy();
+    expect((window as any).electronAPI.invoke).toHaveBeenCalledWith(
+      'walkthroughs:record-shown',
+      'tip-mobile-keep-awake',
+      1,
+    );
+  });
+
+  it('does not activate tips when no empty transcript surface is mounted', async () => {
     render(
       <JotaiProvider store={store as any}>
         <TipProvider currentMode="files">
@@ -79,8 +104,8 @@ describe('TipProvider', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByText('Keep your computer awake for mobile prompts')).toBeTruthy();
-    expect((window as any).electronAPI.invoke).toHaveBeenCalledWith(
+    expect(store.get(activeTipIdAtom)).toBeNull();
+    expect((window as any).electronAPI.invoke).not.toHaveBeenCalledWith(
       'walkthroughs:record-shown',
       'tip-mobile-keep-awake',
       1,

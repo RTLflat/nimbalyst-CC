@@ -25,3 +25,13 @@ export const tipShownThisSessionAtom = atom(false);
  * AgentMode watches this and performs the actual worktree creation.
  */
 export const tipCreateWorktreeSessionRequestAtom = atom<number>(0);
+
+/**
+ * Reference count of empty AI transcripts currently visible.
+ *
+ * The TipProvider gates tip activation on this being > 0 so tips only fire
+ * when there is somewhere inline to render them (the empty panel of a new
+ * AI session). The bottom-left floating TipCard is currently disabled --
+ * see TipProvider for the rendering policy.
+ */
+export const emptyTranscriptVisibleCountAtom = atom<number>(0);
