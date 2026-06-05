@@ -380,7 +380,7 @@ export function WorkspaceSidebar({
       const extType = extensionFileTypes.find(e => e.extension === extName);
       if (extType) {
         fullFileName = fileName.endsWith(extName) ? fileName : `${fileName}${extName}`;
-        content = extType.defaultContent;
+        content = extType.defaultContent ?? '';
       } else {
         // Fallback
         fullFileName = fileName;
@@ -467,7 +467,7 @@ export function WorkspaceSidebar({
         const extType = extensionFileTypes.find(e => e.extension === extName);
         if (extType) {
           fullFileName = fileName.endsWith(extName) ? fileName : `${fileName}${extName}`;
-          content = extType.defaultContent;
+          content = extType.defaultContent ?? '';
         } else {
           fullFileName = fileName;
           content = '';

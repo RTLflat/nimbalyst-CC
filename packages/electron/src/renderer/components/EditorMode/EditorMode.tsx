@@ -1046,7 +1046,7 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
         const extType = extensionFileTypes.find(e => e.extension === extName);
         if (extType) {
           fullFileName = fileName.endsWith(extName) ? fileName : `${fileName}${extName}`;
-          content = extType.defaultContent;
+          content = extType.defaultContent ?? '';
         } else {
           // Fallback
           fullFileName = fileName;
