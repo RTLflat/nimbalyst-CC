@@ -127,6 +127,7 @@ import { codexUsageService } from './services/CodexUsageService';
 import { codexAuthService } from './services/CodexAuthService';
 import { registerExtensionHandlers, getClaudePluginPaths, initializeExtensionFileTypes } from './ipc/ExtensionHandlers';
 import { registerExtensionPermissionHandlers } from './ipc/ExtensionPermissionHandlers';
+import { registerTrackerImporterHandlers } from './ipc/TrackerImporterHandlers';
 import { getAgentWorkflowService } from './services/AgentWorkflowService';
 import { queueMarketplaceInstallRequest, registerExtensionMarketplaceHandlers, runExtensionAutoUpdate } from './ipc/ExtensionMarketplaceHandlers';
 import { getRegisteredExtensions } from './extensions/RegisteredFileTypes';
@@ -1889,6 +1890,7 @@ app.whenReady().then(async () => {
     registerDataModelHandlers();
     registerExtensionHandlers();
     registerExtensionPermissionHandlers();
+    registerTrackerImporterHandlers();
     registerExtensionMarketplaceHandlers();
     registerOffscreenEditorHandlers();
 

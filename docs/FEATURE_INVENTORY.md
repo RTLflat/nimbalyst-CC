@@ -224,6 +224,7 @@ A concise reference of all features in the product. Keep this up to date as feat
 - Item detail panel
 - E2E encrypted sync across team members
 - Inline `#type` items in markdown (TrackerPlugin)
+- External-source importers: import GitHub issues (extension-provided) into the tracker as native bug, task, or feature items with a back-link to the source, a "from GitHub" chip, re-snapshot ("pull latest from source") with conservative merge, and a Source filter; agent tools `tracker_importer_list` / `tracker_importer_search` / `tracker_import` / `tracker_resnapshot` / `tracker_get_by_urn`
 
 ## Shared Links
 
@@ -252,6 +253,7 @@ A concise reference of all features in the product. Keep this up to date as feat
 - Lexical node and transformer contribution
 - Claude slash command contribution
 - Settings panel contribution
+- Tracker importer contribution (`trackerImporters`) — external-source importers backed by a backend module
 - Extension hot reload
 - Extension developer kit with scaffolding
 - Extension marketplace (alpha)
@@ -265,6 +267,7 @@ A concise reference of all features in the product. Keep this up to date as feat
 - Developer Tools
 - Excalidraw
 - Extension Dev Kit
+- GitHub Issues Importer
 - Image Generation
 - iOS Dev Tools
 - MockupLM

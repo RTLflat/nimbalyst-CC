@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-<!-- New features go here -->
+- Import GitHub issues into the tracker as native bug, task, or feature items that link back to the source, with one-click re-snapshot to pull the latest title, status, and body. Uses your installed `gh` login.
 
 ### Changed
 <!-- Changes to existing functionality go here -->
 
 ### Fixed
+- Synced tracker item bodies containing lists or links now load for teammates instead of appearing blank.
 - Voice mode connects again after OpenAI retired the Realtime Beta API (migrated desktop and iOS to the GA shape).
 
 ### Removed

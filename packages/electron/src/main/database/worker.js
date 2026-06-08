@@ -1068,6 +1068,10 @@ class PGLiteWorker {
         CREATE INDEX IF NOT EXISTS idx_tracker_created ON tracker_items(created);
         CREATE INDEX IF NOT EXISTS idx_tracker_updated ON tracker_items(updated);
         CREATE INDEX IF NOT EXISTS idx_tracker_data_gin ON tracker_items USING GIN(data);
+        -- External-source importers: accelerate urn -> local item lookups and
+        -- re-import dedup. Mirrors the SQLite expression index in
+        -- schemas/0010_tracker_origin_urn.sql; same JSON path, same lookup query.
+        CREATE INDEX IF NOT EXISTS idx_tracker_origin_urn ON tracker_items ((data->'origin'->'external'->>'urn'));
       `);
       // console.log('[PGLite Worker] tracker_items table created successfully');
     } catch (error) {

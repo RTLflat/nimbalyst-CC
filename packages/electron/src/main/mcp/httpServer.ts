@@ -50,6 +50,11 @@ import {
   handleTrackerUnlinkSession,
   handleTrackerLinkFile,
   handleTrackerAddComment,
+  handleTrackerImporterList,
+  handleTrackerImporterSearch,
+  handleTrackerImport,
+  handleTrackerResnapshot,
+  handleTrackerGetByUrn,
   trackerToolSchemas,
 } from "./tools/trackerToolHandlers";
 import {
@@ -428,6 +433,21 @@ function createSharedMcpServer(
 
         case "tracker_add_comment":
           return handleTrackerAddComment(args, workspacePath);
+
+        case "tracker_importer_list":
+          return handleTrackerImporterList(args, workspacePath);
+
+        case "tracker_importer_search":
+          return handleTrackerImporterSearch(args, workspacePath);
+
+        case "tracker_import":
+          return handleTrackerImport(args, workspacePath);
+
+        case "tracker_resnapshot":
+          return handleTrackerResnapshot(args, workspacePath);
+
+        case "tracker_get_by_urn":
+          return handleTrackerGetByUrn(args, workspacePath);
 
         case "feedback_anonymize_text":
           return handleFeedbackAnonymizeText(args, workspacePath);

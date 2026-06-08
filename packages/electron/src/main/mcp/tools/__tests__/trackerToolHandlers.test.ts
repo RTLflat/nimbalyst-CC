@@ -154,6 +154,21 @@ describe('rowToTrackerItem typeTags normalization', () => {
     expect(rowToTrackerItem(makeRow({ type_tags: null })).typeTags).toEqual(['bug']);
     expect(rowToTrackerItem(makeRow({ type_tags: 'not json' })).typeTags).toEqual(['bug']);
   });
+
+  it('surfaces data.origin as a top-level field (not buried in customFields)', () => {
+    // Regression: origin landing in customFields made item.origin undefined, so
+    // the TrackerRecord write-back dropped data.origin and the URN index went
+    // empty -- imports could not resolve their own URN after the first sync.
+    const origin = {
+      kind: 'external',
+      external: { providerId: 'github-issues', externalId: 'owner/repo#42', urn: 'github://owner/repo#42' },
+    };
+    const item = rowToTrackerItem(
+      makeRow({ data: JSON.stringify({ title: 'Imported', status: 'to-do', origin }) })
+    );
+    expect(item.origin).toEqual(origin);
+    expect(item.customFields?.origin).toBeUndefined();
+  });
 });
 
 describe('handleTrackerGet', () => {
@@ -357,6 +372,45 @@ describe('handleTrackerCreate session linking', () => {
     expect(result.isError).toBe(false);
     const sqls = mockQuery.mock.calls.map((c) => String(c[0]));
     expect(sqls.some((s) => s.includes('UPDATE ai_sessions'))).toBe(false);
+  });
+
+  it('persists a structured origin and derives source/source_ref for imports', async () => {
+    setupCreateQueueWithoutLink();
+
+    const origin = {
+      kind: 'external' as const,
+      external: {
+        providerId: 'github-issues',
+        externalId: 'owner/repo#42',
+        urn: 'github://owner/repo#42',
+        url: 'https://github.com/owner/repo/issues/42',
+        titleSnapshot: 'Some bug',
+        stateSnapshot: 'open',
+        importedAt: '2026-06-07T00:00:00.000Z',
+        lastSyncedAt: '2026-06-07T00:00:00.000Z',
+      },
+    };
+
+    const result = await handleTrackerCreate(
+      { type: 'bug', title: 'Some bug', origin, createdByAgent: false },
+      '/tmp/ws',
+      undefined,
+    );
+
+    expect(result.isError).toBe(false);
+    const insertCall = mockQuery.mock.calls.find((c) =>
+      String(c[0]).includes('INSERT INTO tracker_items'),
+    );
+    expect(insertCall).toBeTruthy();
+    const params = insertCall![1] as unknown[];
+    // External imports are native DB items; provenance lives in data.origin, not
+    // the legacy source column (which would otherwise be treated as file-backed).
+    expect(params[7]).toBe('native');
+    expect(params[8]).toBeNull();
+    const data = JSON.parse(params[3] as string);
+    expect(data.origin.kind).toBe('external');
+    expect(data.origin.external.urn).toBe('github://owner/repo#42');
+    expect(data.createdByAgent).toBe(false);
   });
 
   it('rejects tracker_create when the schema validation fails', async () => {

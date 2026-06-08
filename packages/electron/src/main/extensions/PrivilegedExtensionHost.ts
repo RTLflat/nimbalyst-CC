@@ -119,6 +119,35 @@ interface ManagedRuntime {
   isAlive: () => boolean;
 }
 
+/**
+ * A one-shot gate that resolves when a spawning module reaches `running`
+ * (init-ack) and rejects if it reaches a terminal non-running state first.
+ * Lets `startModule` await readiness instead of returning while still
+ * `starting` -- otherwise the first call after a cold start always sees
+ * `starting` and the caller (e.g. an importer) wrongly reports "not ready".
+ */
+interface ReadyGate {
+  promise: Promise<void>;
+  resolve: () => void;
+  reject: (err: Error) => void;
+}
+
+function createReadyGate(): ReadyGate {
+  let resolve!: () => void;
+  let reject!: (err: Error) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  // Never let the gate's own rejection surface as an unhandled rejection when
+  // it loses a Promise.race to the timeout; awaiters handle the outcome.
+  promise.catch(() => {});
+  return { promise, resolve, reject };
+}
+
+/** Max time to wait for a spawned module to send init-ack before giving up. */
+const MODULE_READY_TIMEOUT_MS = 15_000;
+
 interface ManagedModule {
   args: StartModuleArgs;
   state: ModuleState;
@@ -126,6 +155,8 @@ interface ManagedModule {
   runtime?: ManagedRuntime;
   pending: Map<string, RpcCallback>;
   nextRpcId: number;
+  /** Set while a spawn is in flight; resolved on `running`, rejected on failure. */
+  ready?: ReadyGate | null;
 }
 
 const HOST_EVENT_STATE_CHANGED = 'state-changed';
@@ -206,9 +237,15 @@ export class PrivilegedExtensionHost extends EventEmitter {
       };
       this.modules.set(key, managed);
     } else {
-      // If already running, no-op. If crashed/stopped/denied, fall through
-      // and re-attempt.
-      if (managed.state.status === 'running' || managed.state.status === 'starting') {
+      // If already running, no-op. If a spawn is already in flight ('starting'),
+      // await it instead of returning a premature 'starting' snapshot (which
+      // would make the caller report "not ready"). If crashed/stopped/denied,
+      // fall through and re-attempt.
+      if (managed.state.status === 'running') {
+        return this.snapshot(managed);
+      }
+      if (managed.state.status === 'starting') {
+        await this.waitForRunning(managed).catch(() => {});
         return this.snapshot(managed);
       }
       managed.args = args;
@@ -355,6 +392,10 @@ export class PrivilegedExtensionHost extends EventEmitter {
     );
 
     await this.spawnRuntime(managed);
+    // Wait for init-ack so callers see 'running' (or a terminal failure),
+    // never a transient 'starting'. A terminal failure rejects the gate; we
+    // swallow it and return the snapshot so the caller inspects the status.
+    await this.waitForRunning(managed).catch(() => {});
     return this.snapshot(managed);
   }
 
@@ -650,7 +691,48 @@ export class PrivilegedExtensionHost extends EventEmitter {
 
   private setState(managed: ManagedModule, state: ModuleState): void {
     managed.state = state;
+    // Settle a pending readiness gate when the spawn outcome is known.
+    // `awaiting-consent` / `awaiting-trust` / `starting` are non-terminal and
+    // leave the gate pending.
+    if (managed.ready) {
+      if (state.status === 'running') {
+        managed.ready.resolve();
+        managed.ready = null;
+      } else if (
+        state.status === 'crashed' ||
+        state.status === 'denied' ||
+        state.status === 'stopped'
+      ) {
+        managed.ready.reject(new Error(`module entered ${state.status}`));
+        managed.ready = null;
+      }
+    }
     this.emit(HOST_EVENT_STATE_CHANGED, this.snapshot(managed));
+  }
+
+  /**
+   * Await a starting module reaching `running`. Resolves immediately if already
+   * running, returns (without throwing) if there is no in-flight spawn, and
+   * gives up after {@link MODULE_READY_TIMEOUT_MS} so a hung spawn can't wedge
+   * the caller. On a terminal failure the gate rejects; callers swallow it and
+   * inspect the returned snapshot's status instead.
+   */
+  private async waitForRunning(managed: ManagedModule): Promise<void> {
+    if (managed.state.status === 'running') return;
+    const gate = managed.ready;
+    if (!gate) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<void>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error('timed out waiting for module to start')),
+        MODULE_READY_TIMEOUT_MS
+      );
+    });
+    try {
+      await Promise.race([gate.promise, timeout]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 
   private snapshot(managed: ManagedModule): ModuleHandle {
@@ -707,6 +789,9 @@ export class PrivilegedExtensionHost extends EventEmitter {
   }
 
   private async spawnRuntime(managed: ManagedModule): Promise<void> {
+    // Arm the readiness gate before sending init; `setState` settles it when
+    // init-ack ('running') or a failure arrives.
+    managed.ready = createReadyGate();
     const runtimeKind = managed.args.module.runtime;
     const bootstrapPath = this.resolveBootstrapPath();
     const ctx = this.buildRuntimeContext(managed);

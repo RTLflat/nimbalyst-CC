@@ -16,6 +16,7 @@ import type {
 import type { BackendModuleContribution, ExtensionPermissionId } from './permissions';
 import type { MonacoThemeContribution, ThemeColors } from './theme';
 import type { ExtensionCollabService } from './collab';
+import type { TrackerImporterContribution } from './trackerImporter';
 
 /**
  * Manifest validation rejects extensions declaring more than this many
@@ -265,6 +266,14 @@ export interface ExtensionContributions {
    * Capped at {@link MAX_BACKEND_MODULES_PER_EXTENSION} per extension.
    */
   backendModules?: BackendModuleContribution[];
+
+  /**
+   * External-source importers that pull items (GitHub issues, Linear issues,
+   * ...) into the native tracker. Each importer's privileged work runs in a
+   * backend module referenced by `backendModuleId`; the host owns the
+   * create/merge path. See {@link TrackerImporterContribution}.
+   */
+  trackerImporters?: TrackerImporterContribution[];
 }
 
 /**

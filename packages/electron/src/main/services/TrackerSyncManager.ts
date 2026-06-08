@@ -802,7 +802,7 @@ export function registerTrackerSyncHandlers(): void {
  * so device-local fields (e.g. `linkedSessions`) that survive this
  * conversion get stripped before they cross the wire.
  */
-function trackerItemToPayload(item: TrackerItem): TrackerItemPayload {
+export function trackerItemToPayload(item: TrackerItem): TrackerItemPayload {
   const record = trackerItemToRecord(item);
   // Labels CRDT (D3): ship the add-wins map. Legacy items written before
   // the CRDT shipped only have `labels: string[]`; for those we reconcile
@@ -838,6 +838,12 @@ function trackerItemToPayload(item: TrackerItem): TrackerItemPayload {
       documentId: record.system.documentId,
       createdAt: record.system.createdAt,
       updatedAt: record.system.updatedAt,
+      // Structured origin (external-source imports) must travel with the
+      // payload so imported items keep their provenance through the optimistic
+      // local apply and across the sync wire to teammates. Without this the
+      // first upsert rewrites `data` from the payload and drops `data.origin`,
+      // emptying the URN index.
+      origin: record.system.origin,
     },
   };
 }
