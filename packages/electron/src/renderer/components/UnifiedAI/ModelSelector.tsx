@@ -19,6 +19,7 @@ import { setWindowModeAtom } from '../../store/atoms/windowMode';
 import { navigateToSettingsAtom } from '../../store/atoms/settingsNavigation';
 import type { SettingsCategory } from '../Settings/SettingsSidebar';
 import { AlphaBadge } from '../common/AlphaBadge';
+import { HelpTooltip } from '../../help';
 
 const ALPHA_PROVIDERS = new Set(['opencode', 'copilot-cli']);
 
@@ -249,11 +250,20 @@ export function ModelSelector({
                   )}
                   {Object.entries(groupedProviders.agents).map(([provider, providerModels]) => (
                     <div key={provider} className="model-selector-provider-group mb-1">
-                      <div className="model-selector-provider-header flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-[var(--nim-text-muted)]">
-                        {getProviderIcon(provider, { size: 12 })}
-                        <span>{getProviderLabel(provider)}</span>
-                        {ALPHA_PROVIDERS.has(provider) && <AlphaBadge size="xs" />}
-                      </div>
+                      {/* Hover help (NIM-825): providers with a
+                          model-picker-provider-<id> HelpContent entry get a
+                          tooltip explaining what they are (e.g. Claude Agent
+                          vs Claude Code CLI); others render unchanged. */}
+                      <HelpTooltip testId={`model-picker-provider-${provider}`} placement="right">
+                        <div
+                          className="model-selector-provider-header flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-[var(--nim-text-muted)]"
+                          data-testid={`model-picker-provider-${provider}`}
+                        >
+                          {getProviderIcon(provider, { size: 12 })}
+                          <span>{getProviderLabel(provider)}</span>
+                          {ALPHA_PROVIDERS.has(provider) && <AlphaBadge size="xs" />}
+                        </div>
+                      </HelpTooltip>
                       {providerModels.map(model => {
                         const isCurrent = model.id === currentModel;
                         const isDisabled = isProviderSwitchDisabled(provider);

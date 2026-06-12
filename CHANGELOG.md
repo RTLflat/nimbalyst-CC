@@ -10,12 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 <!-- New features go here -->
+- Claude Fable 5 is now selectable across all Claude providers.
+- Switch models mid-session on Claude Code CLI sessions from the model picker.
+- Claude Code CLI sessions receive your active document and selection as context, support workspace slash commands and the memory widget, and auto-name themselves from the first prompt.
+- Toggle the raw-terminal drawer with Ctrl+Shift+`; hover help on the model picker explains the Claude Agent vs Claude Code CLI choice.
 
 ### Changed
 <!-- Changes to existing functionality go here -->
 
 ### Fixed
 <!-- Bug fixes go here -->
+- Stopping a Claude Code CLI turn now reliably interrupts the CLI, and queued prompts no longer get stuck near turn boundaries.
+- API failures in Claude Code CLI sessions surface in the transcript without false alarms at session startup.
+- The raw-terminal drawer stays closed once you collapse it and no longer steals keyboard focus from the chat input.
+- Files Edited sidebar updates immediately as Claude Code CLI sessions edit files.
 - Fixed the whole app freezing permanently after closing a terminal that had rendered emoji output.
 - Terminal Retry now actually recovers a failed initialization, and a slow-starting backend auto-recovers without clicking Retry.
 - Claude Code CLI raw terminal no longer double-paints or mis-wraps its display after restoring a session.

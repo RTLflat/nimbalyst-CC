@@ -300,6 +300,8 @@ A concise reference of all features in the product. Keep this up to date as feat
 - Context menu (clear, rename)
 - Claude Code CLI sessions: raw-terminal drawer auto-reveals and focuses when the genuine CLI opens a native picker (`/model`, `/config`, `/login`, …)
 - Claude Code CLI sessions: raw-terminal drawer is vertically resizable and remembers its height and collapsed state per session
+- Claude Code CLI sessions: mid-session model switching from the model picker (drives the CLI's `/model` command; idle turns only)
+- Claude Fable 5 selectable across all Claude providers (chat, Claude Agent, Claude Code CLI)
 
 ## Settings
 

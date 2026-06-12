@@ -344,6 +344,12 @@ describe('resolveClaudeCliModelArg', () => {
     expect(resolveClaudeCliModelArg('claude-code-cli:opus-4-6')).toBe('opus');
   });
 
+  it('passes the fable variant through as the CLI `fable` alias (no 1M form exists)', () => {
+    expect(resolveClaudeCliModelArg('claude-code-cli:fable')).toBe('fable');
+    expect(resolveClaudeCliModelArg('claude-code-cli:fable-5')).toBe('fable');
+    expect(resolveClaudeCliModelArg('fable')).toBe('fable');
+  });
+
   it('passes a bare variant through (normalized), translating -1m to [1m]', () => {
     expect(resolveClaudeCliModelArg('opus')).toBe('opus');
     expect(resolveClaudeCliModelArg('opus-1m')).toBe('opus[1m]');

@@ -112,6 +112,9 @@ export const ClaudeCliTerminalStrip: React.FC<ClaudeCliTerminalStripProps> = ({
         launchMode="claude-cli"
         claudeCliModel={model}
         focusNonce={focusNonce}
+        // NIM-820: never steal focus from the chat input on mount/activation;
+        // focusNonce still focuses explicitly for native pickers.
+        autoFocus={false}
       />
     </div>
   );

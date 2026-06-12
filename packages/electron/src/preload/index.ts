@@ -1632,7 +1632,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       workspacePath: string;
       prompt: string;
       attachments?: unknown[];
+      // NIM-818: active-doc/selection context for the PTY context block.
+      documentContext?: unknown;
     }) => ipcRenderer.invoke('claude-cli:submit-prompt', payload),
+    // Switch a running claude-code-cli session's model via `/model` (NIM-806).
+    setClaudeCliModel: (sessionId: string, model: string) =>
+      ipcRenderer.invoke('claude-cli:set-model', { sessionId, model }),
+    // Stop a claude-code-cli turn with escalation (NIM-814): Ctrl-C → Ctrl-C →
+    // SIGINT, re-checking the PID turn state between steps.
+    interruptClaudeCli: (sessionId: string) =>
+      ipcRenderer.invoke('claude-cli:interrupt', sessionId),
     isActive: (terminalId: string) =>
       ipcRenderer.invoke('terminal:is-active', terminalId),
     write: (terminalId: string, data: string) =>

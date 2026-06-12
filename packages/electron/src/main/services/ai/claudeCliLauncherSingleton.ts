@@ -29,6 +29,7 @@ import { resolveClaudePermissionHookScriptPath } from './claudeCliPermissionHook
 import { getPermissionService } from '../PermissionService';
 import { startClaudeCliProxyObservation, fireClaudeCliTurnCompletion } from './claudeCliObservationSingleton';
 import { flushNextClaudeCliQueuedPromptForSession } from './claudeCliQueueFlushSingleton';
+import { maybeAutoNameClaudeCliSessionProduction } from './claudeCliSessionAutoNameSingleton';
 import type { ClaudeTurnState } from './claudeCliPidState';
 
 interface ClaudeCliLauncherConfig {
@@ -242,6 +243,10 @@ export async function ensureClaudeCliSession(
             // Task sub-agents) — fire completion notification/sound/analytics here,
             // not per proxy message, so sub-agent end_turns don't spuriously notify.
             fireClaudeCliTurnCompletion(input.sessionId, input.workspacePath);
+            // NIM-822: deterministic host-driven naming — if the agent's
+            // opportunistic update_session_meta call didn't name the session by
+            // its first completed turn, derive a title from the first prompt.
+            void maybeAutoNameClaudeCliSessionProduction(input.sessionId);
             // Flush the next queued prompt (if any) into the now-idle CLI. The
             // write restarts the CLI, so the following idle drains the next one.
             void flushNextClaudeCliQueuedPromptForSession(input.sessionId, input.workspacePath);
@@ -249,7 +254,7 @@ export async function ensureClaudeCliSession(
             void stateManager.updateActivity({ sessionId: input.sessionId, status: 'running', isStreaming: true });
             // Idempotent; cancels any pending scheduled-stop from a prior turn.
             void cliFileWatcher
-              .ensureForSession(input.sessionId, watchRoot, null)
+              .ensureForSession(input.sessionId, watchRoot)
               .catch((err) => console.warn('[ClaudeCliLauncher] file watcher start failed:', err));
           } else if (state === 'waiting_for_input') {
             void stateManager.updateActivity({ sessionId: input.sessionId, status: 'waiting_for_input', isStreaming: false });

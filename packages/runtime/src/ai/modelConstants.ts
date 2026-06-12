@@ -12,6 +12,14 @@ export interface ModelDefinition {
 
 export const CLAUDE_MODELS: ModelDefinition[] = [
   {
+    id: 'claude-fable-5',
+    displayName: 'Claude Fable 5 (1M)',
+    shortName: 'Fable 5',
+    maxTokens: 8192,
+    // Fable 5 is the tier above Opus — 1M context natively, dateless alias.
+    contextWindow: 1000000,
+  },
+  {
     id: 'claude-opus-4-8',
     displayName: 'Claude Opus 4.8 (1M)',
     shortName: 'Opus 4.8',
@@ -199,8 +207,8 @@ export const OPENAI_MODELS: ModelDefinition[] = [
  *   the previous-generation Opus selectable after bumping the canonical
  *   `opus` to the next version.
  */
-export type ClaudeCodeVariant = 'opus' | 'sonnet' | 'haiku' | 'opus-4-7' | 'opus-4-6';
-export type ClaudeCodeVariantInput = ClaudeCodeVariant | 'opus-4-8';
+export type ClaudeCodeVariant = 'fable' | 'opus' | 'sonnet' | 'haiku' | 'opus-4-7' | 'opus-4-6';
+export type ClaudeCodeVariantInput = ClaudeCodeVariant | 'opus-4-8' | 'fable-5';
 
 /**
  * Accepted input aliases for Claude Agent model identifiers.
@@ -208,9 +216,12 @@ export type ClaudeCodeVariantInput = ClaudeCodeVariant | 'opus-4-8';
  * `opus-4-8` is intentionally accepted as an alias for the canonical `opus`
  * variant so legacy code paths (meta-agent, Agent tool, imported session IDs)
  * can request the current Opus generation explicitly without requiring a
- * duplicate visible picker entry.
+ * duplicate visible picker entry. `fable-5` is accepted as an alias for
+ * `fable` for the same reason.
  */
 export const CLAUDE_CODE_ACCEPTED_VARIANT_INPUTS: readonly ClaudeCodeVariantInput[] = [
+  'fable',
+  'fable-5',
   'opus',
   'opus-4-8',
   'opus-4-7',
@@ -220,6 +231,8 @@ export const CLAUDE_CODE_ACCEPTED_VARIANT_INPUTS: readonly ClaudeCodeVariantInpu
 ] as const;
 
 const CLAUDE_CODE_VARIANT_INPUT_MAP: Readonly<Record<ClaudeCodeVariantInput, ClaudeCodeVariant>> = {
+  fable: 'fable',
+  'fable-5': 'fable',
   opus: 'opus',
   'opus-4-8': 'opus',
   'opus-4-7': 'opus-4-7',
@@ -233,6 +246,7 @@ export function normalizeClaudeCodeVariant(variant: string): ClaudeCodeVariant |
 }
 
 export const CLAUDE_CODE_VARIANT_VERSIONS: Record<ClaudeCodeVariant, string> = {
+  fable: '5',
   opus: '4.8',
   sonnet: '4.6',
   haiku: '4.5',
@@ -241,6 +255,7 @@ export const CLAUDE_CODE_VARIANT_VERSIONS: Record<ClaudeCodeVariant, string> = {
 };
 
 export const CLAUDE_CODE_MODEL_LABELS: Record<ClaudeCodeVariant, string> = {
+  fable: 'Fable',
   opus: 'Opus',
   sonnet: 'Sonnet',
   haiku: 'Haiku',

@@ -354,7 +354,7 @@ export class MessageStreamingHandler {
     // This is passed through documentContext to avoid changing sendMessage signature
     let permissionsPath = session.worktreeProjectPath || effectiveWorkspacePath;
     if (isAgentProvider(session.provider)) {
-      await this.svc.hooklessWatcher.ensureForSession(session.id, effectiveWorkspacePath, event);
+      await this.svc.hooklessWatcher.ensureForSession(session.id, effectiveWorkspacePath);
     }
 
     // Comprehensive logging of what we're sending to Claude
@@ -1179,7 +1179,7 @@ export class MessageStreamingHandler {
         && effectiveWorkspacePath
       ) {
         try {
-          await this.svc.hooklessWatcher.ensureForSession(session.id, effectiveWorkspacePath, event);
+          await this.svc.hooklessWatcher.ensureForSession(session.id, effectiveWorkspacePath);
         } catch (watcherError) {
           logger.main.error('[AIService] Failed to start Codex file cache:', watcherError);
         }

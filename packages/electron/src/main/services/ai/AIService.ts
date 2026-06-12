@@ -2050,12 +2050,27 @@ export class AIService {
       // in-flight guard + DB claim make this safe against a concurrent transition
       // flush; if the CLI is mid-turn (running/waiting), we skip and let the next
       // idle transition drain it.
+      //
+      // NIM-821: idleness is decided from the LIVE PID file, not just
+      // SessionStateManager's snapshot — the snapshot is updated asynchronously
+      // from the PID watcher, and a prompt queued inside that gap (PID already
+      // idle, state still 'running') skipped the kick with no future idle
+      // transition ever coming. Either signal saying idle kicks the flush; the
+      // claim is race-safe, so erring toward flushing is fine.
       if (queuedSession?.provider === 'claude-code-cli') {
         const terminalManager = getTerminalSessionManager();
         const state = getSessionStateManager().getSessionState(sessionId);
         const workspacePath = queuedSession.workspacePath ?? state?.workspacePath;
-        if (terminalManager.isTerminalActive(sessionId) && state?.status === 'idle' && workspacePath) {
-          void flushNextClaudeCliQueuedPromptForSession(sessionId, workspacePath);
+        if (terminalManager.isTerminalActive(sessionId) && workspacePath) {
+          if (state?.status === 'idle') {
+            void flushNextClaudeCliQueuedPromptForSession(sessionId, workspacePath);
+          } else {
+            void terminalManager.getClaudeCliLiveTurnState(sessionId).then((live) => {
+              if (live === 'idle') {
+                void flushNextClaudeCliQueuedPromptForSession(sessionId, workspacePath);
+              }
+            }).catch(() => {});
+          }
         }
       }
 
@@ -3754,7 +3769,7 @@ export class AIService {
 
     session.worktreePath = worktreePath;
     session.worktreeProjectPath = worktreeProjectPath;
-    await this.hooklessWatcher.ensureForSession(session.id, worktreePath, event);
+    await this.hooklessWatcher.ensureForSession(session.id, worktreePath);
 
     logger.main.info('[AIService] Adopted worktree path for session:', {
       sessionId: session.id,

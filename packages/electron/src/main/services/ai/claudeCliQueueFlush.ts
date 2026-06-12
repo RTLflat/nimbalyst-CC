@@ -17,11 +17,14 @@
  */
 
 import type { ChatAttachment } from '@nimbalyst/runtime/ai/server/types';
+import type { ClaudeCliDocumentContext } from './claudeCliPromptComposer';
 
 export interface FlushQueuedPrompt {
   id: string;
   prompt?: string | null;
   attachments?: unknown[] | null;
+  /** Active-doc/selection context captured at queue time (NIM-818). */
+  documentContext?: ClaudeCliDocumentContext | null;
 }
 
 export interface FlushClaudeCliQueueDeps {
@@ -34,6 +37,7 @@ export interface FlushClaudeCliQueueDeps {
     workspacePath: string;
     prompt: string;
     attachments?: ChatAttachment[];
+    documentContext?: ClaudeCliDocumentContext | null;
   }) => Promise<{ submitted: boolean }>;
 }
 
@@ -58,6 +62,7 @@ export async function flushNextClaudeCliQueuedPrompt(
       workspacePath: args.workspacePath,
       prompt: claimed.prompt ?? '',
       attachments: (claimed.attachments as ChatAttachment[] | undefined) ?? undefined,
+      documentContext: claimed.documentContext ?? undefined,
     });
     await deps.complete(claimed.id);
     return submitted;

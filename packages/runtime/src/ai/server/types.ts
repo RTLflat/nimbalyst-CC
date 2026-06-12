@@ -199,8 +199,13 @@ export function shouldBlockStartedSessionProviderSwitch(
  * `opus-4-7` and `opus-4-6` are pinned-version variants retained after bumping
  * the canonical `opus` alias to 4.8, so users can still choose previous
  * generations. See CLAUDE_CODE_PINNED_SDK_MODELS in modelConstants.ts.
+ *
+ * `fable` is the Fable 5 tier above Opus — the CLI accepts it as a first-class
+ * alias (`--model fable`, `/model fable`). No 1M picker row: the CLI's 1M gates
+ * only recognize opus/sonnet `[1m]` forms. Note it requires usage credits on
+ * subscription plans (the CLI surfaces that itself when unavailable).
  */
-export const CLAUDE_CODE_VARIANTS = ['opus', 'opus-4-7', 'opus-4-6', 'sonnet', 'haiku'] as const;
+export const CLAUDE_CODE_VARIANTS = ['fable', 'opus', 'opus-4-7', 'opus-4-6', 'sonnet', 'haiku'] as const;
 
 /**
  * Resolves a configured model string to the SDK model value.

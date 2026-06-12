@@ -57,6 +57,10 @@ describe('claudeCliLauncherSingleton', () => {
     return { ...mod, manager, stateManager, launch };
   }
 
+  // loadHarness() dynamically imports the real launcher module after
+  // vi.resetModules(), which cold-loads electron/analytics/store + the runtime
+  // MCP config chain (~4s). That's fine solo but crosses the 5s default under
+  // full-suite parallel CPU contention, so give these a generous timeout.
   it('coalesces concurrent ensure calls for the same session', async () => {
     const h = await loadHarness();
     let releaseLaunch: (() => void) | undefined;
@@ -79,7 +83,7 @@ describe('claudeCliLauncherSingleton', () => {
       { success: true },
       { success: true },
     ]);
-  });
+  }, 20000);
 
   it('ends session state when the launched CLI terminal exits', async () => {
     const h = await loadHarness();
@@ -92,5 +96,5 @@ describe('claudeCliLauncherSingleton', () => {
     onExit?.(7);
 
     expect(h.stateManager.endSession).toHaveBeenCalledWith('session-1');
-  });
+  }, 20000);
 });
