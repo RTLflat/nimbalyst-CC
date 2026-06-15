@@ -15,13 +15,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Changes to existing functionality go here -->
 
 ### Fixed
-- Claude Agent sessions no longer hit a "Usage credits required for 1M context" error after a session's model is lost: the silent fallback now uses a standard 200k model, so 1M context is only ever sent when you explicitly pick a 1M model. (#631)
-- "Allow All" permission mode again auto-approves every operation without prompts; the Claude Code safety classifier is now an opt-in toggle per project instead of being forced on.
-- Auto-commit now retries with backoff when another git process briefly holds .git/index.lock, so concurrent sessions commit on the first try instead of failing and being misreported as "no changes".
-- Fixed an Electron crash when a worktree produced a filesystem-event storm; the workspace watcher now shuts down safely instead of aborting the app.
-- Background-project Claude Code CLI sessions no longer spawn (and hit the subscription rate limit) when the app is reactivated; only the window you actually bring to the front resumes its session.
-- Claude Code CLI sessions: the "Thinking…" indicator no longer disappears for the rest of a turn after you answer a question, and a pending question now correctly shows as awaiting input rather than running.
-- Claude Code CLI sessions: a typed slash command (e.g. /implement) no longer occasionally runs a different command that the autocomplete menu had highlighted.
+<!-- Bug fixes go here -->
+
+### Removed
+<!-- Removed features go here -->
+
+## [0.65.4] - 2026-06-15
+
+
+### Added
+<!-- New features go here -->
+
+### Changed
+<!-- Changes to existing functionality go here -->
+
+### Fixed
+- Lost-model fallback no longer silently sends paid 1M context; 1M is only used when you explicitly pick a 1M model. (#631)
+- "Allow All" permission mode auto-approves everything again; the Claude Code safety classifier is now opt-in per project. (#628)
+- No more Electron crash when a worktree produces a filesystem-event storm. (#629)
+- Auto-commit retries when another git process briefly holds .git/index.lock, so concurrent sessions commit on the first try.
+- Background Claude Code CLI sessions no longer spawn (and hit rate limits) when the app is reactivated.
+- Claude Code CLI: the "Thinking…" indicator no longer sticks off after you answer a question.
+- Claude Code CLI: a typed slash command no longer runs the autocomplete-highlighted command instead.
 
 ### Removed
 <!-- Removed features go here -->
