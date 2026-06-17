@@ -833,6 +833,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
           {onPlanItem && selectedIds.size === 1 && (
             <button
+              data-testid="tracker-kanban-plan-item"
               className="tracker-kanban-plan-item-btn w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
               onClick={() => {
                 const [onlyId] = selectedIds;
