@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 <!-- New features go here -->
+- Import tracker items from a Google Sheet, with a shareable web form for teammates to submit bugs and tasks.
 - iOS: create a Meta Agent from the session create menu (alpha-gated to mirror the desktop `meta-agent` feature flag, synced to mobile).
 - New Gemini (Antigravity) marketplace extension, usable as an AI chat and meta-agent provider, with a usage indicator chip. (#558)
 - `/session-cleanup` command (Planning extension) tidies your Sessions board: it proposes phase corrections and "mark complete" candidates for your approval, and flags old sessions to archive.
