@@ -5,7 +5,9 @@ beforeEach(() => vi.restoreAllMocks());
 
 describe('fetchRows', () => {
   it('GETs ?api=rows and returns the rows', async () => {
-    const f = vi.fn(async () => new Response(JSON.stringify({ rows: [{ rowId: 'r1', type: 'bug', title: 'A', commandFeature: '', description: '' }] }), { status: 200 }));
+    const f = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
+      async () => new Response(JSON.stringify({ rows: [{ rowId: 'r1', type: 'bug', title: 'A', commandFeature: '', description: '' }] }), { status: 200 }),
+    );
     vi.stubGlobal('fetch', f);
     const rows = await fetchRows('https://script.google.com/x/exec');
     expect(rows).toHaveLength(1);
@@ -13,7 +15,9 @@ describe('fetchRows', () => {
   });
 
   it('appends the token when provided', async () => {
-    const f = vi.fn(async () => new Response(JSON.stringify({ rows: [] }), { status: 200 }));
+    const f = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
+      async () => new Response(JSON.stringify({ rows: [] }), { status: 200 }),
+    );
     vi.stubGlobal('fetch', f);
     await fetchRows('https://x/exec', 'secret');
     expect(String(f.mock.calls[0][0])).toBe('https://x/exec?api=rows&token=secret');

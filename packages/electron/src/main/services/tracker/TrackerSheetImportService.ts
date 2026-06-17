@@ -59,6 +59,8 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
       workspacePath,
     );
     if (res.isError) {
+      // skipped counts both validation rejections (above) and create failures (here);
+      // the specific reason is recorded in errors[].
       result.skipped++;
       result.errors.push({ rowId: row.rowId, reason: 'Create failed' });
       continue;
