@@ -27,6 +27,7 @@ import type { ElectronDocumentService } from '../../services/ElectronDocumentSer
 import { getTrackerImporterRegistry } from '../../services/tracker/TrackerImporterRegistry';
 import { TrackerResearchService } from '../../services/trackerResearch/TrackerResearchService';
 import { getTrackerImportService } from '../../services/tracker/TrackerImportService';
+import { allocateIssueKey } from '../../services/tracker/issueKeyAllocator';
 import { materializeTrackerTypeDef, removeTrackerTypeDef } from '../../services/tracker/trackerTypeDefStore';
 
 type McpToolResult = {
@@ -1695,18 +1696,10 @@ export async function handleTrackerCreate(
     // Allocate a local issue key if sync didn't assign one
     if (createdRow && !createdRow.issue_key) {
       try {
-        const prefix = workspacePath
-          ? (getWorkspaceState(workspacePath).issueKeyPrefix || 'NIM')
-          : 'NIM';
-        const maxResult = await db.query<{ max_num: number | null }>(
-          `SELECT MAX(issue_number) as max_num FROM tracker_items WHERE workspace = $1`,
-          [workspacePath || '']
-        );
-        const nextNum = (maxResult.rows[0]?.max_num ?? 0) + 1;
-        const issueKey = `${prefix}-${nextNum}`;
+        const { issueNumber, issueKey } = await allocateIssueKey(db, workspacePath || '', args.type);
         await db.query(
           `UPDATE tracker_items SET issue_number = $1, issue_key = $2 WHERE id = $3`,
-          [nextNum, issueKey, id]
+          [issueNumber, issueKey, id]
         );
         createdRow = await resolveTrackerRowByReference(db, id, workspacePath);
         createdItem = createdRow ? rowToTrackerItem(createdRow) : createdItem;
