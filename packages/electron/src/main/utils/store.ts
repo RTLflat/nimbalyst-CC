@@ -480,6 +480,11 @@ export interface WorkspaceState {
   // See packages/electron/src/main/extensions/permissionGrantStore.ts for the
   // canonical read/write API.
   extensionPermissionGrants?: PersistedPermissionGrant[];
+  // Google Sheet integration configuration for this workspace.
+  googleSheetIntegration?: {
+    webAppUrl: string;
+    accessToken?: string;
+  };
   lastUpdated: number;
 }
 
