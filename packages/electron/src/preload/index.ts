@@ -1708,6 +1708,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('terminal:create-session', { workspacePath, ...options }),
   },
 
+  // Google Sheet tracker import
+  trackerSheets: {
+    getConfig: (workspacePath: string) => ipcRenderer.invoke('tracker:sheet-get-config', workspacePath),
+    connect: (workspacePath: string, webAppUrl: string, accessToken?: string) =>
+      ipcRenderer.invoke('tracker:sheet-connect', { workspacePath, webAppUrl, accessToken }),
+    import: (workspacePath: string) => ipcRenderer.invoke('tracker:sheet-import', workspacePath),
+  },
+
   // Generic IPC methods for services that need them
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
   send: (channel: string, ...args: any[]) => ipcRenderer.send(channel, ...args),
