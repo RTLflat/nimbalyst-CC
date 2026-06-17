@@ -84,6 +84,9 @@ import { normalizeCodexProviderConfig, omitModelsField, stripTransientProviderFi
 import { isFileInWorkspaceOrWorktree, resolveProjectPath } from '../../utils/workspaceDetection';
 import { SessionFilesRepository } from '@nimbalyst/runtime';
 import { buildToolPermissionResponseRecord } from './claudeCliToolPermission';
+import { isTrackerPlanSession } from '../trackerPlan/isTrackerPlanSession';
+import { handleTrackerPlanExitApproval } from '../trackerPlan/handleTrackerPlanExitApproval';
+import { onPlanApproved } from '../trackerPlan/onPlanApproved';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -2350,11 +2353,77 @@ export class AIService {
 
       // Check if this is a ClaudeCodeProvider with the resolve method
       if (typeof (provider as any).resolveExitPlanModeConfirmation === 'function') {
-        (provider as any).resolveExitPlanModeConfirmation(requestId, response, sessionId, 'desktop');
+        // Tracker-plan sessions ("Plan this item") treat approval as
+        // accept-and-save, NOT proceed-to-implement. Detect the binding from the
+        // raw ai_sessions.metadata, capture the plan, and resolve the
+        // confirmation as a DENY so AgentToolHooks keeps the agent in planning.
+        let trackerPlanHandled = false;
+        if (response.approved) {
+          try {
+            const { getDatabase } = await import('../../database/initialize');
+            const db = getDatabase();
+            const { rows: metaRows } = await db.query<{ metadata: unknown }>(
+              `SELECT metadata FROM ai_sessions WHERE id = $1`,
+              [sessionId],
+            );
+            const rawMetadata = metaRows[0]?.metadata;
+
+            if (isTrackerPlanSession(rawMetadata)) {
+              const trackerPlanResult = await handleTrackerPlanExitApproval({
+                requestId,
+                sessionId,
+                workspacePath: session.workspacePath ?? '',
+                metadata: rawMetadata,
+                response,
+                readPlanRequest: async (sid, reqId) => {
+                  const { rows } = await db.query<{ content: string }>(
+                    `SELECT content
+                     FROM ai_agent_messages
+                     WHERE session_id = $1
+                       AND content LIKE '%"type":"exit_plan_mode_request"%'
+                       AND content LIKE $2
+                     ORDER BY created_at DESC
+                     LIMIT 1`,
+                    [sid, `%"requestId":"${reqId}"%`],
+                  );
+                  const raw = rows[0]?.content;
+                  if (!raw) return { planFilePath: '', planSummary: undefined };
+                  try {
+                    const parsed = JSON.parse(raw) as { planFilePath?: string; planSummary?: string };
+                    return { planFilePath: parsed.planFilePath || '', planSummary: parsed.planSummary };
+                  } catch {
+                    return { planFilePath: '', planSummary: undefined };
+                  }
+                },
+                onPlanApproved,
+                resolveConfirmation: (reqId, resolvedResponse) => {
+                  (provider as any).resolveExitPlanModeConfirmation(reqId, resolvedResponse, sessionId, 'desktop');
+                },
+              });
+
+              if (trackerPlanResult.handled) {
+                trackerPlanHandled = true;
+                logger.main.info(`[AIService] Tracker-plan session ${sessionId}: captured approved plan and kept session in planning (no mode=agent).`);
+              } else if (trackerPlanResult.missingPlan) {
+                logger.main.error(`[AIService] Tracker-plan session ${sessionId}: ExitPlanMode approved but no durable exit_plan_mode_request found for requestId=${requestId}; falling through to normal allow behavior (plan NOT captured).`);
+              }
+            }
+          } catch (trackerPlanErr) {
+            logger.main.error(`[AIService] Tracker-plan ExitPlanMode handling failed for session ${sessionId}; falling through to normal behavior:`, trackerPlanErr);
+          }
+        }
+
+        // Default behavior for non-tracker-plan sessions (and the fall-through
+        // cases above): resolve the confirmation as-is. The tracker-plan branch
+        // already resolved (as a deny) when it handled the approval.
+        if (!trackerPlanHandled) {
+          (provider as any).resolveExitPlanModeConfirmation(requestId, response, sessionId, 'desktop');
+        }
 
         // If approved, update the session mode to 'agent' in the database
-        // This ensures the mode persists across session switches and app restarts
-        if (response.approved) {
+        // This ensures the mode persists across session switches and app restarts.
+        // Tracker-plan sessions stay in planning, so skip the mode change there.
+        if (response.approved && !trackerPlanHandled) {
           await AISessionsRepository.updateMetadata(sessionId, { mode: 'agent' });
           logger.main.info(`[AIService] Session ${sessionId} mode updated to 'agent' after ExitPlanMode approval`);
         }
