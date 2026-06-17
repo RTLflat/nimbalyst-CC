@@ -85,6 +85,8 @@ interface KanbanBoardProps {
    *  picker). Only shown when exactly one item is selected; callers omit this
    *  when worktrees are unavailable (not a git repo / feature off). */
   onRequestWorktreeLaunch?: (itemId: string) => void;
+  /** Launch a read-only PLANNING-mode AI session for the selected item. */
+  onPlanItem?: (itemId: string) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -170,6 +172,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onDeleteItems,
   onCopyDeepLink,
   onRequestWorktreeLaunch,
+  onPlanItem,
 }) => {
   // In-app confirm (DialogContext) — avoids native window.confirm, which leaves
   // renderer keyboard focus stuck afterward in Electron.
@@ -825,6 +828,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             >
               <MaterialSymbol icon="account_tree" size={16} />
               Launch in Worktree
+            </button>
+          )}
+
+          {onPlanItem && selectedIds.size === 1 && (
+            <button
+              className="tracker-kanban-plan-item-btn w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
+              onClick={() => {
+                const [onlyId] = selectedIds;
+                closeContextMenu();
+                onPlanItem(onlyId);
+              }}
+            >
+              <MaterialSymbol icon="assignment" size={16} />
+              Plan this item
             </button>
           )}
 

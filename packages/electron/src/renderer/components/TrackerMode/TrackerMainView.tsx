@@ -44,6 +44,7 @@ import { useFloatingMenu } from '../../hooks/useFloatingMenu';
 import { buildTrackerTagOptions, filterTrackerItemsByTags } from './trackerTagFilterUtils';
 import { useDialog } from '../../contexts/DialogContext';
 import { useSheetImport } from './useSheetImport';
+import { buildPlanningPrompt } from '../../../main/services/trackerPlan/planPrompt';
 
 export type ViewMode = 'list' | 'table' | 'kanban';
 
@@ -365,6 +366,73 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const handleRequestWorktreeLaunch = useCallback((trackerItemId: string) => {
     setWorktreePickerItemId(trackerItemId);
   }, []);
+
+  /**
+   * Create a PLANNING-mode session for the given tracker item, queue the
+   * planning prompt, and navigate to the agent panel.
+   *
+   * Critical ordering: planning mode must be set BEFORE the queued prompt is
+   * processed, because AgentToolHooks only intercepts ExitPlanMode when the
+   * session's current mode is 'planning'.
+   */
+  const handlePlanItem = useCallback(async (itemId: string) => {
+    try {
+      const itemsMap = store.get(trackerItemsMapAtom);
+      const item = itemsMap.get(itemId);
+      if (!item) {
+        console.error('[TrackerMainView] handlePlanItem: item not found', itemId);
+        return;
+      }
+      const key = item.issueKey || itemId;
+      const planAbsPath = `${workspacePath}/nimbalyst-local/plans/${key}-plan.md`;
+      const sessionId = crypto.randomUUID();
+      const parsedModel = defaultModel ? ModelIdentifier.tryParse(defaultModel) : null;
+      const provider = parsedModel?.provider || 'claude-code';
+      const title = getRecordTitle(item);
+
+      // 1. Create the session (metadata.kind marks it as a tracker-plan session)
+      await window.electronAPI.invoke('sessions:create', {
+        session: {
+          id: sessionId,
+          provider,
+          model: defaultModel,
+          title: `Plan: ${title}`,
+          metadata: { kind: 'tracker-plan', trackerItemId: itemId, issueKey: key },
+        },
+        workspaceId: workspacePath,
+      });
+
+      // 2. Set planning mode BEFORE queuing the prompt so AgentToolHooks
+      //    intercepts ExitPlanMode correctly.
+      await window.electronAPI.invoke('sessions:update-metadata', sessionId, { mode: 'planning' });
+
+      // 3. Link the session to the tracker item
+      await window.electronAPI.invoke('tracker:link-session', { trackerId: itemId, sessionId });
+
+      // 4. Queue the planning prompt
+      const prompt = buildPlanningPrompt({
+        itemId,
+        type: item.primaryType,
+        title,
+        description: getRecordFieldStr(item, 'description') ?? '',
+        planAbsPath,
+      });
+      await window.electronAPI.invoke('ai:createQueuedPrompt', sessionId, prompt);
+
+      // 5. Trigger processing (workspacePath as 2nd arg mirrors handleLaunchWorktreeSession)
+      await window.electronAPI.invoke('ai:triggerQueueProcessing', sessionId, workspacePath || '');
+
+      // 6. Refresh and navigate
+      await refreshSessionList();
+      setSelectedWorkstream({
+        workspacePath: workspacePath || '',
+        selection: { type: 'session', id: sessionId },
+      });
+      setWindowMode('agent');
+    } catch (err) {
+      console.error('[TrackerMainView] Failed to plan item:', err);
+    }
+  }, [workspacePath, defaultModel, refreshSessionList, setSelectedWorkstream, setWindowMode]);
 
   // Base item sets from atoms
   const activeItems = useAtomValue(trackerItemsByTypeAtom(filterType));
@@ -1077,6 +1145,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onDeleteItems={handleDeleteItems}
               onCopyDeepLink={teamOrgId ? handleCopyDeepLink : undefined}
               onRequestWorktreeLaunch={canLaunchWorktree ? handleRequestWorktreeLaunch : undefined}
+              onPlanItem={handlePlanItem}
             />
           )}
 
@@ -1106,6 +1175,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onLaunchSession={handleLaunchSession}
               onLaunchWorktreeSession={handleRequestWorktreeLaunch}
               canLaunchWorktree={canLaunchWorktree}
+              onPlanItem={handlePlanItem}
               onArchive={handleArchiveItem}
               onDelete={handleDeleteItem}
             />

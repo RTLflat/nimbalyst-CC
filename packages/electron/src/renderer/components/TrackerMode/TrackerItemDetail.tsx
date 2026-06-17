@@ -38,6 +38,8 @@ interface TrackerItemDetailProps {
   onLaunchWorktreeSession?: (trackerItemId: string) => void;
   /** Whether the worktree dispatch action is available (git repo + feature on). */
   canLaunchWorktree?: boolean;
+  /** Launch a read-only PLANNING-mode session for this item. */
+  onPlanItem?: (trackerItemId: string) => void;
   onArchive?: (itemId: string, archive: boolean) => void;
   onDelete?: (itemId: string) => void;
 }
@@ -184,6 +186,7 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
   onLaunchSession,
   onLaunchWorktreeSession,
   canLaunchWorktree,
+  onPlanItem,
   onArchive,
   onDelete,
 }) => {
@@ -1341,6 +1344,17 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
                   >
                     <MaterialSymbol icon="account_tree" size={14} />
                     Launch in Worktree
+                  </button>
+                )}
+                {onPlanItem && (
+                  <button
+                    className="tracker-plan-item-btn flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded text-nim-muted hover:text-nim hover:bg-nim-tertiary transition-colors"
+                    onClick={() => onPlanItem(item.id)}
+                    title="Create an AI planning session for this item (read-only analysis)"
+                    data-testid="tracker-plan-item"
+                  >
+                    <MaterialSymbol icon="assignment" size={14} />
+                    Plan this item
                   </button>
                 )}
               </div>
