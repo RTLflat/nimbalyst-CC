@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/session-cleanup` command (Planning extension) tidies your Sessions board: it proposes phase corrections and "mark complete" candidates for your approval, and flags old sessions to archive.
 - `nim`, a companion CLI for trackers: list, create, update, comment on, archive, and import tracker items from the terminal — through a running Nimbalyst, or directly against the database when the app is closed.
 - Dispatch a tracker item (bug, task, or feature) into a new isolated git worktree — from its detail panel or the Kanban card menu — which auto-starts an agent on the item's description.
-- New tracker items get automatic background research that enriches their content with the relevant code, giving worktree dispatches a stronger starting prompt (toggle in tracker settings).
+- "Plan this item": draft a full implementation plan for a tracker item in a read-only planning session, approve it to save the plan and rewrite the description as a summary, and worktree dispatch then follows the saved plan.
 
 ### Changed
 - Contextual tips now fill empty AI sessions immediately and on every empty session, instead of after a delay and only once per app launch.

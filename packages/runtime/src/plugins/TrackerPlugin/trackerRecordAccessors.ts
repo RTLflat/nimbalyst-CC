@@ -103,16 +103,13 @@ export function getRecordSortOrder(record: TrackerRecord): string | undefined {
   return record.fields.kanbanSortOrder as string | undefined;
 }
 
-/** Status of a record's automatic preliminary research. */
-export type ResearchStatus = 'running' | 'done' | 'failed';
-
 /**
- * Get the auto-research status of a record, if any.
- * Stored as a plain data field `research = { status, startedAt, ... }`.
+ * Get the plan status of a record, if any.
+ * Stored as a plain data field `plan = { status, path, summary, ... }`.
  */
-export function getResearchStatus(record: TrackerRecord): ResearchStatus | undefined {
-  const research = record.fields.research as { status?: ResearchStatus } | undefined;
-  return research?.status;
+export function getPlanStatus(record: TrackerRecord): 'planned' | undefined {
+  const plan = record.fields.plan as { status?: 'planned' } | undefined;
+  return plan?.status;
 }
 
 /**
