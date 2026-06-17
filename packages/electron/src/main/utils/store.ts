@@ -427,8 +427,6 @@ export interface WorkspaceState {
   fileTreeFilter?: WorkspaceFileTreeFilter;
   // File tree icons visibility
   showFileIcons?: boolean;
-  // Auto preliminary research on new tracker items (default on; undefined === on)
-  autoTrackerResearch?: boolean;
   // AI provider overrides for this project
   aiProviderOverrides?: AIProviderOverrides;
   // Extension configuration for this project (extensionId -> key -> value)
@@ -638,7 +636,6 @@ function createDefaultWorkspaceState(workspacePath: string): WorkspaceState {
     onboarding: undefined,
     fileTreeFilter: undefined,
     showFileIcons: undefined,
-    autoTrackerResearch: undefined,
     aiProviderOverrides: undefined,
     extensionConfiguration: undefined,
     agentPermissions: undefined,
@@ -896,17 +893,6 @@ export function updateWorkspaceState(
 
 export function getWorkspaceRecentFiles(workspacePath: string): string[] {
   return getWorkspaceState(workspacePath).recentDocuments;
-}
-
-/** Auto preliminary research on new tracker items. Defaults to ON (undefined === on). */
-export function getAutoTrackerResearchEnabled(workspacePath: string): boolean {
-  return getWorkspaceState(workspacePath).autoTrackerResearch !== false;
-}
-
-export function setAutoTrackerResearchEnabled(workspacePath: string, enabled: boolean): void {
-  updateWorkspaceState(workspacePath, state => {
-    state.autoTrackerResearch = enabled;
-  });
 }
 
 export function addWorkspaceRecentFile(workspacePath: string, filePath: string): void {

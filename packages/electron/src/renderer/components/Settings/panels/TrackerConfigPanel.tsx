@@ -480,8 +480,6 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [issueKeyPrefix, setIssueKeyPrefix] = useState('NIM');
   const [isSyncConnected, setIsSyncConnected] = useState(false);
-  // Auto preliminary research on new tracker items. Defaults to ON (undefined === on).
-  const [autoTrackerResearch, setAutoTrackerResearch] = useState(true);
   const { confirm } = useDialog();
 
   useEffect(() => {
@@ -495,7 +493,6 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
           if (state?.issueKeyPrefix) {
             setIssueKeyPrefix(state.issueKeyPrefix);
           }
-          setAutoTrackerResearch(state?.autoTrackerResearch !== false);
         } catch {
           // Workspace state not available
         }
@@ -585,15 +582,6 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
     }
   }, [workspacePath, isSyncConnected]);
 
-  const handleAutoResearchChange = useCallback((enabled: boolean) => {
-    setAutoTrackerResearch(enabled);
-    if (workspacePath) {
-      (window as any).electronAPI.invoke('workspace:update-state', workspacePath, {
-        autoTrackerResearch: enabled,
-      });
-    }
-  }, [workspacePath]);
-
   const handleSyncModeChange = useCallback(async (type: string, mode: TrackerSyncMode) => {
     const tracker = trackers.find((entry) => entry.model.type === type);
     if (!tracker || tracker.syncMode === mode) {
@@ -648,22 +636,6 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
         value={issueKeyPrefix}
         onChange={handlePrefixChange}
       />
-
-      <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)]">
-        <h4 className="provider-panel-section-title text-[15px] font-semibold mb-2 text-[var(--nim-text)]">
-          Automatic research
-        </h4>
-        <p className="text-[13px] leading-relaxed text-[var(--nim-text-muted)] mb-1">
-          When you create a tracker item, run a brief read-only background agent that finds the relevant code and writes a summary into the item — so launching it in a worktree starts with real context.
-        </p>
-        <SettingsToggle
-          checked={autoTrackerResearch}
-          onChange={handleAutoResearchChange}
-          name="Auto-research new items"
-          description="Only runs in git repositories with a default AI model configured."
-          testId="tracker-auto-research-toggle"
-        />
-      </div>
 
       {isAdmin ? (
         <AdminView
