@@ -16,7 +16,8 @@ import {
   LEGACY_KEY_TO_TYPE,
   buildFullDocumentTrackerId,
 } from '../documentHeader/frontmatterUtils';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getFieldByRole, resolveRoleFieldName } from '../trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getFieldByRole, resolveRoleFieldName, getResearchStatus } from '../trackerRecordAccessors';
+import { ResearchStatusBadge } from './ResearchStatusBadge';
 import { globalRegistry, parseDate } from '../models';
 import {usePostHog} from "posthog-js/react";
 import {
@@ -508,7 +509,10 @@ export function renderCell(
         );
       }
       return (
-        <div className="title-text text-[13px] font-medium text-[var(--nim-text)] truncate min-w-0">{title}</div>
+        <div className="title-text flex items-baseline gap-2 min-w-0">
+          <span className="text-[13px] font-medium text-[var(--nim-text)] truncate min-w-0">{title}</span>
+          <ResearchStatusBadge status={getResearchStatus(item)} />
+        </div>
       );
 
     case 'key':
@@ -1294,6 +1298,7 @@ export function TrackerTable({
                         <span className="shrink-0 text-[10px] font-mono font-medium uppercase tracking-[0.08em] text-[var(--nim-text-faint)]">{item.issueKey}</span>
                       )}
                       <span className="text-[13px] font-medium text-[var(--nim-text)] truncate">{title}</span>
+                      <ResearchStatusBadge status={getResearchStatus(item)} />
                     </div>
                   )}
                 </div>

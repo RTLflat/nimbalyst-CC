@@ -125,14 +125,15 @@ describe('MetaAgentService.runHeadlessReadOnlyTurn', () => {
     vi.spyOn(svc as any, 'buildSessionResultData').mockResolvedValue({ status: 'idle', fullResponse: 'RELEVANT: Foo.ts' });
     vi.spyOn(svc as any, 'cleanupChildSession').mockResolvedValue(undefined);
 
-    const res = await svc.runHeadlessReadOnlyTurn('/ws', 'find relevant files', { timeoutMs: 1000, pollMs: 10, model: 'm:x' });
+    const res = await svc.runHeadlessReadOnlyTurn('/ws', 'find relevant files', { timeoutMs: 1000, pollMs: 10, model: 'm:x', effort: 'low' });
 
     expect(res).toEqual({ status: 'done', text: 'RELEVANT: Foo.ts' });
-    // Spawned read-only with the prompt + model forwarded.
+    // Spawned read-only with the prompt + model + effort forwarded.
     const args = create.mock.calls[0][2] as any;
     expect(args.toolScope).toBe('read');
     expect(args.prompt).toBe('find relevant files');
     expect(args.model).toBe('m:x');
+    expect(args.effortLevel).toBe('low');
   });
 
   it('returns failed (does not throw) when child creation throws', async () => {

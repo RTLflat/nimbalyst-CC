@@ -5,6 +5,7 @@ import { safeHandle } from '../utils/ipcRegistry';
 import { ClaudeCodeProvider, OpenAICodexProvider, OpenAICodexACPProvider, SessionManager } from '@nimbalyst/runtime/ai/server';
 import type { AIProviderType } from '@nimbalyst/runtime/ai/server/types';
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
+import type { EffortLevel } from '@nimbalyst/runtime/ai/server/effortLevels';
 import { AISessionsRepository, AgentMessagesRepository, SessionFilesRepository } from '@nimbalyst/runtime';
 import { getSessionStateManager } from '@nimbalyst/runtime/ai/server/SessionStateManager';
 import { getDefaultAIModel } from '../utils/store';
@@ -69,6 +70,8 @@ interface CreateChildSessionArgs {
   useWorktree?: boolean;
   worktreeId?: string;
   toolScope?: string;
+  /** Per-session reasoning effort; persisted to metadata and applied at turn time. */
+  effortLevel?: EffortLevel;
 }
 
 function normalizeStoredChildModelIdentifier(
@@ -376,7 +379,7 @@ export class MetaAgentService {
   public async runHeadlessReadOnlyTurn(
     workspaceId: string,
     prompt: string,
-    opts: { model?: string; title?: string; timeoutMs?: number; pollMs?: number } = {},
+    opts: { model?: string; effort?: EffortLevel; title?: string; timeoutMs?: number; pollMs?: number } = {},
   ): Promise<{ status: 'done' | 'partial' | 'failed'; text: string }> {
     const timeoutMs = opts.timeoutMs ?? 120_000;
     const pollMs = opts.pollMs ?? 1500;
@@ -401,6 +404,7 @@ export class MetaAgentService {
         prompt,
         toolScope: 'read',
         model: opts.model,
+        effortLevel: opts.effort,
         title: opts.title ?? 'Background research',
       });
       childId = child.sessionId;
@@ -678,10 +682,16 @@ export class MetaAgentService {
     // Read-only tool segregation: persist a restricted capability scope so the
     // child is granted only the matching dev tools at turn time (an analyze
     // child physically cannot run_command, so it cannot build or claim to).
+    // effortLevel is persisted in the same metadata write (AIService reads
+    // metadata.effortLevel at turn time) so a background research child can run
+    // a cheaper model at low effort without inheriting the app default.
     const childToolScope =
       args.toolScope === 'read' || args.toolScope === 'write' ? args.toolScope : undefined;
-    if (childToolScope) {
-      await AISessionsRepository.updateMetadata(sessionId, { metadata: { toolScope: childToolScope } });
+    const childMetadata: Record<string, unknown> = {};
+    if (childToolScope) childMetadata.toolScope = childToolScope;
+    if (args.effortLevel) childMetadata.effortLevel = args.effortLevel;
+    if (Object.keys(childMetadata).length > 0) {
+      await AISessionsRepository.updateMetadata(sessionId, { metadata: childMetadata });
     }
 
     const initialPrompt = args.prompt?.trim();

@@ -16,7 +16,8 @@ import { $getRoot } from 'lexical';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import type { FieldDefinition } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/TrackerDataModel';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField, getResearchStatus } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { ResearchStatusBadge } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/ResearchStatusBadge';
 import { TrackerFieldEditor, type TeamMemberOption } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/TrackerFieldEditor';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
 import { trackerItemByIdAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
@@ -1026,6 +1027,7 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
                 Archived
               </span>
             )}
+            <ResearchStatusBadge status={getResearchStatus(item)} />
           </div>
           {externalOrigin && (() => {
             const summary = importerSummaries.find((s) => s.id === externalOrigin.providerId);

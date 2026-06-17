@@ -46,6 +46,12 @@ describe('TrackerResearchService.runForItem', () => {
 
     await freshService().runForItem('i1', '/ws');
 
+    // Research runs a cheap pinned model (Sonnet/low), not the app default (opus).
+    expect(runTurnMock).toHaveBeenCalledWith('/ws', expect.any(String), expect.objectContaining({
+      model: 'claude-code:sonnet',
+      effort: 'low',
+    }));
+
     // running first, then the body+done write
     const descCall = handleTrackerUpdateMock.mock.calls.find((c) => typeof c[0]?.description === 'string');
     expect(descCall).toBeTruthy();

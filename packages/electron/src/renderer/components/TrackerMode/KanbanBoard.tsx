@@ -4,7 +4,8 @@ import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import type { TrackerItemType } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import { globalRegistry, getRoleField } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole, getResearchStatus } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { ResearchStatusBadge } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/ResearchStatusBadge';
 import { generateKeyBetween } from '@nimbalyst/runtime/utils/fractionalIndex';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
 import { useDialog } from '../../contexts/DialogContext';
@@ -735,6 +736,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             {p}
                           </span>
                         ) : null; })()}
+                        {/* Auto-research status */}
+                        <ResearchStatusBadge status={getResearchStatus(item)} />
                         {/* Owner avatar */}
                         {(() => {
                           const owner = getFieldByRole(item, 'assignee') as string | undefined;

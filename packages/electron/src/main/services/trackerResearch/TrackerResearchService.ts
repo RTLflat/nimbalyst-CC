@@ -10,6 +10,7 @@ import { getDatabase } from '../../database/initialize';
 import { getAutoTrackerResearchEnabled, getDefaultAIModel } from '../../utils/store';
 import { shouldResearchTrackerItem } from './gating';
 import { buildResearchPrompt, composeBodyWithResearch } from './researchContent';
+import { resolveResearchModel } from './researchModel';
 import { MetaAgentService } from '../MetaAgentService';
 import { handleTrackerUpdate } from '../../mcp/tools/trackerToolHandlers';
 import { GitStatusService } from '../GitStatusService';
@@ -72,8 +73,12 @@ export class TrackerResearchService {
       const existingBody = decodeBody(row.content);
       const prompt = buildResearchPrompt({ title, type: row.type, body: existingBody });
 
+      // Pin a cheap, fast model (Sonnet at low effort) rather than inheriting the
+      // app default, which may be Opus and would silently burn tokens here.
+      const { model, effort } = resolveResearchModel(getDefaultAIModel());
       const result = await MetaAgentService.getInstance().runHeadlessReadOnlyTurn(workspacePath, prompt, {
-        model: getDefaultAIModel() ?? undefined,
+        model,
+        effort,
         title: `Research: ${title || itemId}`,
         timeoutMs: 120_000,
       });
