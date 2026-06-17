@@ -23,6 +23,7 @@ import { trackerItemByIdAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/tr
 import { refreshSessionListAtom, sessionRegistryAtom, type SessionMeta } from '../../store/atoms/sessions';
 import { buildTrackerDeepLink } from '../../store/atoms/collabDocuments';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { useDialog } from '../../contexts/DialogContext';
 import { getRelativeTimeString } from '../../utils/dateFormatting';
 import { useTrackerContentCollab } from '../../hooks/useTrackerContentCollab';
 
@@ -33,6 +34,9 @@ interface TrackerItemDetailProps {
   onSwitchToFilesMode?: () => void;
   onSwitchToAgentMode?: (sessionId: string) => void;
   onLaunchSession?: (trackerItemId: string) => void;
+  onLaunchWorktreeSession?: (trackerItemId: string) => void;
+  /** Whether the worktree dispatch action is available (git repo + feature on). */
+  canLaunchWorktree?: boolean;
   onArchive?: (itemId: string, archive: boolean) => void;
   onDelete?: (itemId: string) => void;
 }
@@ -177,6 +181,8 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
   onSwitchToFilesMode,
   onSwitchToAgentMode,
   onLaunchSession,
+  onLaunchWorktreeSession,
+  canLaunchWorktree,
   onArchive,
   onDelete,
 }) => {
@@ -185,6 +191,10 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
   const item = useAtomValue(trackerItemByIdAtom(itemId));
   const sessionRegistry = useAtomValue(sessionRegistryAtom);
   const refreshSessionList = useSetAtom(refreshSessionListAtom);
+  // In-app confirm (DialogContext). Replaces native window.confirm, which in
+  // Electron leaves the renderer's keyboard focus stuck afterward (so the
+  // QuickAdd title input could not be typed into until a panel switch/restart).
+  const { confirm } = useDialog();
 
   const model = useMemo(() => globalRegistry.get(item?.primaryType ?? ''), [item?.primaryType]);
 
@@ -1098,10 +1108,14 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
           {onDelete && (
             <button
               className="p-1 rounded hover:bg-nim-tertiary text-nim-muted hover:text-[#ef4444]"
-              onClick={() => {
-                if (window.confirm(`Delete "${getRecordTitle(item)}"? This cannot be undone.`)) {
-                  onDelete(item.id);
-                }
+              onClick={async () => {
+                const ok = await confirm({
+                  title: 'Delete item',
+                  message: `Delete "${getRecordTitle(item)}"? This cannot be undone.`,
+                  confirmLabel: 'Delete',
+                  destructive: true,
+                });
+                if (ok) onDelete(item.id);
               }}
               title="Delete permanently"
             >
@@ -1285,7 +1299,7 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
         </div>
 
         {/* Linked Sessions */}
-        {(linkedSessions.length > 0 || onLaunchSession || canLinkExistingSession || isLinkingExistingSession) && (
+        {(linkedSessions.length > 0 || onLaunchSession || onLaunchWorktreeSession || canLinkExistingSession || isLinkingExistingSession) && (
           <div className="pt-1 border-t border-nim">
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[11px] font-medium text-nim-muted uppercase tracking-[0.5px]">
@@ -1315,6 +1329,16 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
                   >
                     <MaterialSymbol icon="add" size={14} />
                     Launch Session
+                  </button>
+                )}
+                {onLaunchWorktreeSession && canLaunchWorktree && (
+                  <button
+                    className="flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded text-nim-muted hover:text-nim hover:bg-nim-tertiary transition-colors"
+                    onClick={() => onLaunchWorktreeSession(item.id)}
+                    title="Launch a new AI session in an isolated git worktree"
+                  >
+                    <MaterialSymbol icon="account_tree" size={14} />
+                    Launch in Worktree
                   </button>
                 )}
               </div>

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Gemini (Antigravity) marketplace extension, usable as an AI chat and meta-agent provider, with a usage indicator chip. (#558)
 - `/session-cleanup` command (Planning extension) tidies your Sessions board: it proposes phase corrections and "mark complete" candidates for your approval, and flags old sessions to archive.
 - `nim`, a companion CLI for trackers: list, create, update, comment on, archive, and import tracker items from the terminal — through a running Nimbalyst, or directly against the database when the app is closed.
+- Dispatch a tracker item (bug, task, or feature) into a new isolated git worktree — from its detail panel or the Kanban card menu — which auto-starts an agent on the item's description.
 
 ### Changed
 - Contextual tips now fill empty AI sessions immediately and on every empty session, instead of after a delay and only once per app launch.
