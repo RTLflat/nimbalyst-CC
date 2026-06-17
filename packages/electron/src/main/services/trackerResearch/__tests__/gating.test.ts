@@ -18,6 +18,16 @@ describe('shouldResearchTrackerItem', () => {
     expect(shouldResearchTrackerItem(item({}, 'import'), base)).toBe(false);
   });
 
+  it('allows Google Sheet imports (minimal rows benefit from research)', () => {
+    const sheet = item({ origin: { kind: 'external', external: { providerId: 'google-sheets' } } }, 'import');
+    expect(shouldResearchTrackerItem(sheet, base)).toBe(true);
+  });
+
+  it('still skips other external imports (e.g. github)', () => {
+    const gh = item({ origin: { kind: 'external', external: { providerId: 'github-issues' } } }, 'import');
+    expect(shouldResearchTrackerItem(gh, base)).toBe(false);
+  });
+
   it('skips agent-created items', () => {
     expect(shouldResearchTrackerItem(item({ createdByAgent: true }), base)).toBe(false);
   });

@@ -24,15 +24,23 @@ export interface ResearchGateItem {
 /**
  * Decide whether to run auto-research for a freshly created tracker item.
  *
- * Runs only for user-created native items, in a git repo, with the feature on
- * and a default model available. Skips imports, agent-created items, and items
- * already researched or mid-research.
+ * Runs for user-created native items and Google Sheet imports, in a git repo,
+ * with the feature on and a default model available. Skips other imports
+ * (GitHub/Linear), agent-created items, and items already researched or
+ * mid-research.
  */
 export function shouldResearchTrackerItem(item: ResearchGateItem, ctx: ResearchGateContext): boolean {
   if (!ctx.settingEnabled || !ctx.isGitRepo || !ctx.hasDefaultModel) return false;
   const data = item.data || {};
-  if (item.source === 'import') return false;
-  if (data.origin?.kind === 'external') return false;
+  // Google Sheet imports carry only a title + short description, so they benefit
+  // from research like native items -- unlike rich external imports (GitHub/Linear)
+  // that already include the upstream body. Treat them as research-eligible.
+  const isSheetImport =
+    data.origin?.kind === 'external' && data.origin?.external?.providerId === 'google-sheets';
+  if (!isSheetImport) {
+    if (item.source === 'import') return false;
+    if (data.origin?.kind === 'external') return false;
+  }
   if (data.createdByAgent === true) return false;
   const status = data.research?.status;
   if (status === 'running' || status === 'done') return false;
