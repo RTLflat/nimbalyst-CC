@@ -5,6 +5,20 @@ export function deterministicTrackerId(sourceId: string, rowId: string): string 
   return `gsheet-${hash.slice(0, 32)}`;
 }
 
-export function googleSheetsOrigin(webAppUrl: string, rowId: string) {
-  return { kind: 'external' as const, external: { source: 'google-sheets' as const, webAppUrl, rowId } };
+// Matches ExternalSourceRef (packages/runtime/src/core/DocumentService.ts): the
+// renderer's source chip reads origin.external.providerId, so it MUST be set.
+export function googleSheetsOrigin(webAppUrl: string, rowId: string, title: string) {
+  const now = new Date().toISOString();
+  return {
+    kind: 'external' as const,
+    external: {
+      providerId: 'google-sheets',
+      externalId: rowId,
+      urn: `google-sheets://${rowId}`,
+      url: webAppUrl,
+      titleSnapshot: title,
+      importedAt: now,
+      lastSyncedAt: now,
+    },
+  };
 }

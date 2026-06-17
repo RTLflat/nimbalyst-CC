@@ -50,12 +50,15 @@ export type ViewMode = 'list' | 'table' | 'kanban';
 /** Provenance key for a record: the importer provider id, or 'native'. */
 function recordSourceKey(record: TrackerRecord): string {
   const origin = record.system.origin;
-  return origin?.kind === 'external' ? origin.external.providerId : 'native';
+  // Defensive: an external origin missing providerId (e.g. a malformed/legacy
+  // import) must fall back to 'native' rather than returning undefined, which
+  // would crash sourceKeyLabel's .split and take down the whole tracker view.
+  return origin?.kind === 'external' ? (origin.external.providerId || 'native') : 'native';
 }
 
 /** Human label for a source key without probing the importer (avoids backend start). */
 function sourceKeyLabel(key: string): string {
-  if (key === 'native') return 'Native';
+  if (!key || key === 'native') return 'Native';
   // Map known provider ids; otherwise title-case the id.
   const known: Record<string, string> = {
     'github-issues': 'GitHub',

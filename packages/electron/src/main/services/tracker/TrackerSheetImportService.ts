@@ -54,7 +54,7 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
         type: row.type,
         title: row.title.trim(),
         description: composeBody(row.commandFeature, row.description),
-        origin: googleSheetsOrigin(cfg.webAppUrl, row.rowId),
+        origin: googleSheetsOrigin(cfg.webAppUrl, row.rowId, row.title.trim()),
       } as any,
       workspacePath,
     );
