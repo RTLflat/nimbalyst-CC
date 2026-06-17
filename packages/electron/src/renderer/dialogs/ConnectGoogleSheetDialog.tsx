@@ -26,7 +26,11 @@ export function ConnectGoogleSheetDialog({ workspacePath, onClose }: Props) {
   }
 
   return (
-    <div className="connect-google-sheet-dialog bg-[var(--nim-bg)] text-[var(--nim-text)] p-4 rounded">
+    <div className="connect-google-sheet-overlay nim-overlay" onClick={onClose}>
+      <div
+        className="connect-google-sheet-dialog nim-modal min-w-[400px] max-w-[520px] p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
       <h2 className="text-base font-semibold mb-2">Connect Google Sheet</h2>
       {phase !== 'done' && (
         <>
@@ -84,6 +88,7 @@ export function ConnectGoogleSheetDialog({ workspacePath, onClose }: Props) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
