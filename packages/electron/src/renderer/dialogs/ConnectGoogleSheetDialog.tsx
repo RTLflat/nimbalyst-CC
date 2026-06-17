@@ -73,7 +73,7 @@ export function ConnectGoogleSheetDialog({ workspacePath, onClose }: Props) {
           <p className="mb-1">Connected. Share this form link with contributors:</p>
           <div className="flex gap-2 items-center">
             <code className="select-text break-all">{formUrl}</code>
-            <button className="nim-btn-secondary" onClick={() => navigator.clipboard.writeText(formUrl)}>
+            <button className="nim-btn-secondary" onClick={() => navigator.clipboard?.writeText(formUrl).catch(() => {})}>
               Copy
             </button>
           </div>

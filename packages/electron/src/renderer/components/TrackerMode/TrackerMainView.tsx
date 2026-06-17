@@ -649,13 +649,14 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const { runImport, lastResult } = useSheetImport(workspacePath ?? '', openConnect);
 
   useEffect(() => {
-    if (lastResult) {
-      setImportStatus(
-        `Imported ${lastResult.created} item(s)` +
-        (lastResult.skipped ? `, ${lastResult.skipped} skipped` : '') +
-        (lastResult.alreadyImported ? `, ${lastResult.alreadyImported} already imported` : ''),
-      );
-    }
+    if (!lastResult) return;
+    setImportStatus(
+      `Imported ${lastResult.created} item(s)` +
+      (lastResult.skipped ? `, ${lastResult.skipped} skipped` : '') +
+      (lastResult.alreadyImported ? `, ${lastResult.alreadyImported} already imported` : ''),
+    );
+    const t = setTimeout(() => setImportStatus(null), 4000);
+    return () => clearTimeout(t);
   }, [lastResult]);
 
   // External-source importers (GitHub, ...) discovered from installed extensions.

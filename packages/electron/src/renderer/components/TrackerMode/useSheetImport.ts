@@ -14,9 +14,9 @@ export function useSheetImport(workspacePath: string, openConnectDialog?: () => 
 
   useEffect(() => {
     let alive = true;
-    window.electronAPI.trackerSheets.getConfig(workspacePath).then((cfg) => {
-      if (alive) setConnected(Boolean(cfg?.webAppUrl));
-    });
+    window.electronAPI.trackerSheets.getConfig(workspacePath)
+      .then((cfg) => { if (alive) setConnected(Boolean(cfg?.webAppUrl)); })
+      .catch(() => { if (alive) setConnected(false); });
     return () => { alive = false; };
   }, [workspacePath]);
 
