@@ -4,7 +4,8 @@ import { FloatingPortal } from '@floating-ui/react';
 import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerIdentity } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
-import { getRecordTitle, getRecordPriority, getRecordStatus, getRecordFieldStr, getFieldByRole, isMyRecord } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordPriority, getRecordStatus, getRecordFieldStr, getRecordField, getFieldByRole, isMyRecord } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { buildDispatchPrompt } from './trackerDispatchPrompt';
 import {
   TrackerTable,
   TrackerTableGrid,
@@ -241,8 +242,14 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
       }
     } catch { /* fall back to data.description below */ }
 
+    // Read the saved plan (stamped by the plan-approval flow in Tasks 4-6).
+    const rawPlan = trackerItem ? getRecordField(trackerItem, 'plan') : undefined;
+    const plan = (rawPlan && typeof (rawPlan as any)?.path === 'string' && (rawPlan as any).path)
+      ? rawPlan as { path: string; summary?: string }
+      : undefined;
+
     if (trackerItem?.system?.documentPath) {
-      // File-backed item: link via file path
+      // File-backed item: link via file path (side-effect stays here, not in the pure builder)
       await window.electronAPI.invoke('tracker:link-session', {
         trackerId: `file:${trackerItem.system.documentPath}`,
         sessionId,
@@ -252,43 +259,40 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
       const priority = getRecordPriority(trackerItem);
       const description = getRecordFieldStr(trackerItem, 'description');
       const itemId = trackerItem.issueKey || trackerItemId;
-      const lines: string[] = [];
-      lines.push(`implement tracker item ${itemId}: ${title}`);
-      const meta: string[] = [];
-      if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-      if (status) meta.push(`status: ${status}`);
-      if (priority) meta.push(`priority: ${priority}`);
-      if (meta.length > 0) lines.push(meta.join(', '));
-      const detail = bodyText.trim() || description;
-      if (detail) lines.push(`\n${detail}`);
-      lines.push(`\nSource: @${trackerItem.system.documentPath}`);
-      lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-      return lines.join('\n');
+      return buildDispatchPrompt({
+        id: itemId,
+        title,
+        primaryType: trackerItem.primaryType ?? '',
+        status: status || undefined,
+        priority: priority || undefined,
+        description: bodyText.trim() || description,
+        sourcePath: trackerItem.system.documentPath,
+        plan,
+      });
     }
 
-    // Native DB item: link by ID
+    // Native DB item: link by ID (side-effect stays here)
     await window.electronAPI.invoke('tracker:link-session', {
       trackerId: trackerItemId,
       sessionId,
     });
     const title = trackerItem ? getRecordTitle(trackerItem) : trackerItemId;
     const itemId = trackerItem?.issueKey || trackerItemId;
-    const lines: string[] = [];
-    lines.push(`implement tracker item ${itemId}: ${title}`);
-    if (trackerItem) {
-      const status = getRecordStatus(trackerItem);
-      const priority = getRecordPriority(trackerItem);
-      const description = getRecordFieldStr(trackerItem, 'description');
-      const meta: string[] = [];
-      if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-      if (status) meta.push(`status: ${status}`);
-      if (priority) meta.push(`priority: ${priority}`);
-      if (meta.length > 0) lines.push(meta.join(', '));
-      const detail = bodyText.trim() || description;
-      if (detail) lines.push(`\n${detail}`);
+    if (!trackerItem) {
+      return buildDispatchPrompt({ id: itemId, title, primaryType: '' });
     }
-    lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-    return lines.join('\n');
+    const status = getRecordStatus(trackerItem);
+    const priority = getRecordPriority(trackerItem);
+    const description = getRecordFieldStr(trackerItem, 'description');
+    return buildDispatchPrompt({
+      id: itemId,
+      title,
+      primaryType: trackerItem.primaryType ?? '',
+      status: status || undefined,
+      priority: priority || undefined,
+      description: bodyText.trim() || description,
+      plan,
+    });
   }, []);
 
   /** Launch a new AI session linked to a tracker item */
