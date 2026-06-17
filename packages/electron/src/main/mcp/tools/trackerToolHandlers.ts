@@ -25,7 +25,6 @@ import {
 import { normalizeLegacyLabelValues } from '@nimbalyst/runtime/sync';
 import type { ElectronDocumentService } from '../../services/ElectronDocumentService';
 import { getTrackerImporterRegistry } from '../../services/tracker/TrackerImporterRegistry';
-import { TrackerResearchService } from '../../services/trackerResearch/TrackerResearchService';
 import { getTrackerImportService } from '../../services/tracker/TrackerImportService';
 import { allocateIssueKey } from '../../services/tracker/issueKeyAllocator';
 import { materializeTrackerTypeDef, removeTrackerTypeDef } from '../../services/tracker/trackerTypeDefStore';
@@ -1760,18 +1759,6 @@ export async function handleTrackerCreate(
       }
     }
 
-    // Kick off background preliminary research for native items. Gating lives in
-    // the service (user-created native only; skips imports/agent-created/already-run),
-    // so this call is unconditional. Static import + runtime-only call keeps the
-    // import cycle (service -> handleTrackerUpdate) safe via ES-module live bindings;
-    // a dynamic import re-ran electron-log init ("__ELECTRON_LOG__" double-register).
-    if (createdItem && workspacePath) {
-      try {
-        TrackerResearchService.getInstance().onNativeTrackerItemCreated(id, workspacePath);
-      } catch (researchKickError) {
-        console.error('[MCP Server] auto-research kick failed (non-fatal):', researchKickError);
-      }
-    }
 
     // Link the current session only when explicitly requested.
     // Why: auto-linking on every create polluted sessions with unrelated tracker
