@@ -61,8 +61,6 @@ When you approve the plan:
 - A "Planned" chip appears on the item in all tracker views
 - Subsequent worktree dispatches pick up the saved plan automatically, giving the agent a stronger and more focused starting prompt
 
-To trigger planning manually via MCP: use `tracker_plan_item({ itemId: "<id>" })`.
-
 ## Importing Tracker Items from Google Sheets
 
 To set up a form for teammates to submit bugs and tasks directly into your workspace's tracker, deploy the provided Apps Script from `tools/google-apps-script/` (see its README for deployment steps). Paste the deployed web app `/exec` URL into **Tracker** > **Connect Google Sheet**, then share that same URL with teammates as the submission form. When you click **Import**, new rows are pulled into trackers with auto-generated keys (e.g., `BUG-001`). Re-importing is safe — already-imported rows are skipped and not duplicated.
