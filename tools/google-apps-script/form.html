@@ -26,6 +26,6 @@ google.script.run.withSuccessHandler(function(r){
   if(r && r.ok){f.reset();msg.textContent='Thanks! Your item was submitted.';}
   else{msg.textContent='Error: '+((r&&r.error)||'unknown');}
 }).withFailureHandler(function(err){msg.textContent='Error: '+err.message;})
-.doPost({parameter:{type:f.elements['type'].value,title:f.elements['title'].value,commandFeature:f.elements['commandFeature'].value,description:f.elements['description'].value,company:f.elements['company'].value}});
+.submitForm({type:f.elements['type'].value,title:f.elements['title'].value,commandFeature:f.elements['commandFeature'].value,description:f.elements['description'].value,company:f.elements['company'].value});
 });
 </script></body></html>

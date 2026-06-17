@@ -40,13 +40,16 @@ function doGet(e) {
   return t.evaluate().setTitle('Submit a tracker item');
 }
 
-function doPost(e) {
-  var p = (e && e.parameter) || {};
-  if (p.company) return json_({ error: 'rejected' }); // honeypot
+// Shared submission logic. Returns a PLAIN object so it can be called directly
+// over the google.script.run bridge from the form (which cannot read a
+// ContentService.TextOutput).
+function submitForm(p) {
+  p = p || {};
+  if (p.company) return { error: 'rejected' }; // honeypot
   var type = String(p.type || '');
   var title = String(p.title || '').trim();
-  if (CREATABLE.indexOf(type) === -1) return json_({ error: 'Invalid type' });
-  if (!title) return json_({ error: 'Title is required' });
+  if (CREATABLE.indexOf(type) === -1) return { error: 'Invalid type' };
+  if (!title) return { error: 'Title is required' };
   var sh = sheet_();
   ensureHeader_(sh);
   sh.appendRow([
@@ -57,5 +60,11 @@ function doPost(e) {
     String(p.commandFeature || '').trim(),
     String(p.description || '').trim(),
   ]);
-  return json_({ ok: true });
+  return { ok: true };
+}
+
+// HTTP entry point for external clients; wraps the plain result as JSON.
+// The served form calls submitForm() directly via google.script.run, not this.
+function doPost(e) {
+  return json_(submitForm((e && e.parameter) || {}));
 }
