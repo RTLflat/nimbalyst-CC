@@ -35,9 +35,11 @@ import { setSelectedWorkstreamAtom, sessionRegistryAtom, refreshSessionListAtom,
 import { trackerItemsMapAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
 import { workstreamStateAtom } from '../../store/atoms/workstreamState';
 import { setWindowModeAtom } from '../../store/atoms/windowMode';
-import { defaultAgentModelAtom } from '../../store/atoms/appSettings';
+import { defaultAgentModelAtom, worktreesFeatureAvailableAtom } from '../../store/atoms/appSettings';
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
 import { store } from '../../store';
+import { isGitRepoAtom, createWorktreeWithSessionCoreActionAtom } from '../../store/actions/sessionHistoryActions';
+import { WorktreeBaseBranchPicker } from '../AgenticCoding/WorktreeBaseBranchPicker';
 import { useFloatingMenu } from '../../hooks/useFloatingMenu';
 import { buildTrackerTagOptions, filterTrackerItemsByTags } from './trackerTagFilterUtils';
 
@@ -156,6 +158,30 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const setWindowMode = useSetAtom(setWindowModeAtom);
   const refreshSessionList = useSetAtom(refreshSessionListAtom);
 
+  // Worktree dispatch: gate the "Launch in Worktree" action to git repos with
+  // the worktrees feature enabled, mirroring the SessionHistory New Worktree button.
+  const worktreesAvailable = useAtomValue(worktreesFeatureAvailableAtom);
+  const isGitRepo = useAtomValue(isGitRepoAtom(workspacePath || ''));
+  const canLaunchWorktree = worktreesAvailable && isGitRepo;
+  const dispatchCreateWorktreeSession = useSetAtom(createWorktreeWithSessionCoreActionAtom);
+  // Tracker item awaiting worktree dispatch (drives the base-branch picker modal).
+  const [worktreePickerItemId, setWorktreePickerItemId] = useState<string | null>(null);
+
+  // Populate isGitRepoAtom for this workspace so the worktree action is gated
+  // correctly even when the user opens Tracker mode without first visiting
+  // Agent mode (the other populator). Idempotent — both converge to the same value.
+  useEffect(() => {
+    if (!workspacePath) return;
+    let cancelled = false;
+    window.electronAPI?.invoke('git:is-repo', workspacePath)
+      .then((result: { success?: boolean; isRepo?: boolean }) => {
+        if (cancelled) return;
+        store.set(isGitRepoAtom(workspacePath), Boolean(result?.success && result.isRepo));
+      })
+      .catch(() => { /* leave the default (false) in place */ });
+    return () => { cancelled = true; };
+  }, [workspacePath]);
+
   /** Navigate to Agent mode and activate a linked session */
   const handleSwitchToAgentMode = useCallback((sessionId: string) => {
     // Determine session type for proper workstream selection
@@ -188,6 +214,77 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
     setWindowMode('agent');
   }, [workspacePath, setSelectedWorkstream, setWindowMode]);
 
+  /**
+   * Link a freshly created session to a tracker item and build the context-rich
+   * seed prompt (title, type/status/priority, description, source). Shared by
+   * the plain-session and worktree dispatch paths; the caller decides whether to
+   * pre-fill it as a draft or queue-and-run it.
+   */
+  const linkAndBuildTrackerPrompt = useCallback(async (sessionId: string, trackerItemId: string): Promise<string> => {
+    const itemsMap = store.get(trackerItemsMapAtom);
+    const trackerItem = itemsMap.get(trackerItemId);
+
+    // Prefer the CONTENT body (what the user sees/edits, and where auto-research
+    // writes its findings) over the data.description metadata field.
+    let bodyText = '';
+    try {
+      const res = await window.electronAPI.invoke('document-service:tracker-item-get-content', { itemId: trackerItemId }) as { success?: boolean; content?: any };
+      const raw = res?.content;
+      if (typeof raw === 'string') {
+        try { const v = JSON.parse(raw); bodyText = typeof v === 'string' ? v : ''; } catch { bodyText = raw; }
+      }
+    } catch { /* fall back to data.description below */ }
+
+    if (trackerItem?.system?.documentPath) {
+      // File-backed item: link via file path
+      await window.electronAPI.invoke('tracker:link-session', {
+        trackerId: `file:${trackerItem.system.documentPath}`,
+        sessionId,
+      });
+      const title = getRecordTitle(trackerItem);
+      const status = getRecordStatus(trackerItem);
+      const priority = getRecordPriority(trackerItem);
+      const description = getRecordFieldStr(trackerItem, 'description');
+      const itemId = trackerItem.issueKey || trackerItemId;
+      const lines: string[] = [];
+      lines.push(`implement tracker item ${itemId}: ${title}`);
+      const meta: string[] = [];
+      if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
+      if (status) meta.push(`status: ${status}`);
+      if (priority) meta.push(`priority: ${priority}`);
+      if (meta.length > 0) lines.push(meta.join(', '));
+      const detail = bodyText.trim() || description;
+      if (detail) lines.push(`\n${detail}`);
+      lines.push(`\nSource: @${trackerItem.system.documentPath}`);
+      lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
+      return lines.join('\n');
+    }
+
+    // Native DB item: link by ID
+    await window.electronAPI.invoke('tracker:link-session', {
+      trackerId: trackerItemId,
+      sessionId,
+    });
+    const title = trackerItem ? getRecordTitle(trackerItem) : trackerItemId;
+    const itemId = trackerItem?.issueKey || trackerItemId;
+    const lines: string[] = [];
+    lines.push(`implement tracker item ${itemId}: ${title}`);
+    if (trackerItem) {
+      const status = getRecordStatus(trackerItem);
+      const priority = getRecordPriority(trackerItem);
+      const description = getRecordFieldStr(trackerItem, 'description');
+      const meta: string[] = [];
+      if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
+      if (status) meta.push(`status: ${status}`);
+      if (priority) meta.push(`priority: ${priority}`);
+      if (meta.length > 0) lines.push(meta.join(', '));
+      const detail = bodyText.trim() || description;
+      if (detail) lines.push(`\n${detail}`);
+    }
+    lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
+    return lines.join('\n');
+  }, []);
+
   /** Launch a new AI session linked to a tracker item */
   const handleLaunchSession = useCallback(async (trackerItemId: string) => {
     try {
@@ -208,61 +305,9 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
         workspaceId: workspacePath,
       });
       if (result?.success && result?.id) {
-        // Look up the tracker item to build a context-aware draft prompt
-        const itemsMap = store.get(trackerItemsMapAtom);
-        const trackerItem = itemsMap.get(trackerItemId);
-
-        if (trackerItem?.system?.documentPath) {
-          // File-backed item: link via file path and pre-fill draft with item context
-          await window.electronAPI.invoke('tracker:link-session', {
-            trackerId: `file:${trackerItem.system.documentPath}`,
-            sessionId: result.id,
-          });
-          // Build a context-rich prompt with the specific item's details
-          const title = getRecordTitle(trackerItem);
-          const status = getRecordStatus(trackerItem);
-          const priority = getRecordPriority(trackerItem);
-          const description = getRecordFieldStr(trackerItem, 'description');
-          const itemId = trackerItem.issueKey || trackerItemId;
-          const lines: string[] = [];
-          lines.push(`implement tracker item ${itemId}: ${title}`);
-          const meta: string[] = [];
-          if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-          if (status) meta.push(`status: ${status}`);
-          if (priority) meta.push(`priority: ${priority}`);
-          if (meta.length > 0) lines.push(meta.join(', '));
-          if (description) lines.push(`\n${description}`);
-          lines.push(`\nSource: @${trackerItem.system.documentPath}`);
-          lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-          await window.electronAPI.invoke('ai:saveDraftInput', result.id,
-            lines.join('\n'), workspacePath);
-        } else {
-          // Native DB item: link by ID
-          await window.electronAPI.invoke('tracker:link-session', {
-            trackerId: trackerItemId,
-            sessionId: result.id,
-          });
-          // Pre-fill draft with item context
-          const title = trackerItem ? getRecordTitle(trackerItem) : trackerItemId;
-          const itemId = trackerItem?.issueKey || trackerItemId;
-          const lines: string[] = [];
-          lines.push(`implement tracker item ${itemId}: ${title}`);
-          if (trackerItem) {
-            const status = getRecordStatus(trackerItem);
-            const priority = getRecordPriority(trackerItem);
-            const description = getRecordFieldStr(trackerItem, 'description');
-            const meta: string[] = [];
-            if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-            if (status) meta.push(`status: ${status}`);
-            if (priority) meta.push(`priority: ${priority}`);
-            if (meta.length > 0) lines.push(meta.join(', '));
-            if (description) lines.push(`\n${description}`);
-          }
-          lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-          await window.electronAPI.invoke('ai:saveDraftInput', result.id,
-            lines.join('\n'), workspacePath);
-        }
-
+        // Plain session: pre-fill the prompt as a draft (user presses send).
+        const prompt = await linkAndBuildTrackerPrompt(result.id, trackerItemId);
+        await window.electronAPI.invoke('ai:saveDraftInput', result.id, prompt, workspacePath);
         // Refresh session list to pick up the new session, then navigate
         await refreshSessionList();
         setSelectedWorkstream({
@@ -274,7 +319,47 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
     } catch (err) {
       console.error('[TrackerMainView] Failed to launch session:', err);
     }
-  }, [workspacePath, refreshSessionList, setSelectedWorkstream, setWindowMode, defaultModel]);
+  }, [workspacePath, refreshSessionList, setSelectedWorkstream, setWindowMode, defaultModel, linkAndBuildTrackerPrompt]);
+
+  /**
+   * Dispatch a tracker item into a brand-new isolated git worktree: create the
+   * worktree + worktree-backed session, seed it with the item context, then
+   * navigate. Throws on failure so the base-branch picker can surface the
+   * error inline. The draft is seeded before navigation to avoid the user
+   * landing in an unseeded session.
+   */
+  const handleLaunchWorktreeSession = useCallback(
+    async (trackerItemId: string, opts?: { baseBranch?: string; name?: string }) => {
+      const itemsMap = store.get(trackerItemsMapAtom);
+      const trackerItem = itemsMap.get(trackerItemId);
+      const itemLabel = trackerItem
+        ? (trackerItem.issueKey || getRecordTitle(trackerItem) || 'tracker item')
+        : trackerItemId;
+      const res = await dispatchCreateWorktreeSession({
+        baseBranch: opts?.baseBranch,
+        name: opts?.name,
+        title: `Worktree: ${itemLabel}`,
+      });
+      if (!res) throw new Error('Failed to create worktree session');
+      const prompt = await linkAndBuildTrackerPrompt(res.sessionId, trackerItemId);
+      // Auto-start: queue the prompt and trigger processing so the agent begins
+      // immediately in the worktree (mirrors the Blitz queued-prompt path). The
+      // worktree working dir is resolved server-side from the session's worktreeId.
+      await window.electronAPI.invoke('ai:createQueuedPrompt', res.sessionId, prompt);
+      await window.electronAPI.invoke('ai:triggerQueueProcessing', res.sessionId, workspacePath || '');
+      setSelectedWorkstream({
+        workspacePath: workspacePath || '',
+        selection: { type: 'worktree', id: res.sessionId },
+      });
+      setWindowMode('agent');
+    },
+    [dispatchCreateWorktreeSession, linkAndBuildTrackerPrompt, setSelectedWorkstream, setWindowMode, workspacePath],
+  );
+
+  /** Open the base-branch picker to dispatch the given item into a new worktree. */
+  const handleRequestWorktreeLaunch = useCallback((trackerItemId: string) => {
+    setWorktreePickerItemId(trackerItemId);
+  }, []);
 
   // Base item sets from atoms
   const activeItems = useAtomValue(trackerItemsByTypeAtom(filterType));
@@ -958,6 +1043,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onArchiveItems={handleArchiveItems}
               onDeleteItems={handleDeleteItems}
               onCopyDeepLink={teamOrgId ? handleCopyDeepLink : undefined}
+              onRequestWorktreeLaunch={canLaunchWorktree ? handleRequestWorktreeLaunch : undefined}
             />
           )}
 
@@ -985,12 +1071,27 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onSwitchToFilesMode={onSwitchToFilesMode}
               onSwitchToAgentMode={handleSwitchToAgentMode}
               onLaunchSession={handleLaunchSession}
+              onLaunchWorktreeSession={handleRequestWorktreeLaunch}
+              canLaunchWorktree={canLaunchWorktree}
               onArchive={handleArchiveItem}
               onDelete={handleDeleteItem}
             />
           </DetailPanelResizable>
         )}
       </div>
+
+      {/* Base-branch picker for dispatching a tracker item into a new worktree */}
+      <WorktreeBaseBranchPicker
+        isOpen={!!worktreePickerItemId}
+        workspacePath={workspacePath || ''}
+        onCreate={async (opts) => {
+          if (worktreePickerItemId) {
+            await handleLaunchWorktreeSession(worktreePickerItemId, opts);
+          }
+          setWorktreePickerItemId(null);
+        }}
+        onCancel={() => setWorktreePickerItemId(null)}
+      />
 
       {/* External-source import picker */}
       {sourceDialog && workspacePath && (

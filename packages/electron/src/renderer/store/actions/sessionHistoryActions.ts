@@ -441,22 +441,31 @@ export const createNewSessionActionAtom = atom(
 );
 
 /**
- * Create a new worktree + session. Gated by `worktreesFeatureAvailableAtom`
- * and the per-workspace `isGitRepoAtom`.
+ * Internal core: create a new worktree + a worktree-backed session, register
+ * the session in renderer state, and return the new ids. Does NOT navigate --
+ * callers decide where to send the user (the New Worktree button navigates to
+ * the worktree; the tracker dispatch flow seeds a draft first). Gated by
+ * `worktreesFeatureAvailableAtom` and the per-workspace `isGitRepoAtom`.
  */
-export const createNewWorktreeSessionActionAtom = atom(
+export const createWorktreeWithSessionCoreActionAtom = atom(
   null,
-  async (get, set, options?: { baseBranch?: string; name?: string }) => {
+  async (
+    get,
+    set,
+    options?: { baseBranch?: string; name?: string; title?: string },
+  ): Promise<{ sessionId: string; worktree: NonNullable<WorktreeCreateResult['worktree']> } | null> => {
     const workspacePath = getWorkspacePath(get);
-    if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) return;
+    if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) return null;
 
-    if (!get(worktreesFeatureAvailableAtom)) return;
-    if (!get(isGitRepoAtom(workspacePath))) return;
+    if (!get(worktreesFeatureAvailableAtom)) return null;
+    if (!get(isGitRepoAtom(workspacePath))) return null;
 
     const defaultModel = get(defaultAgentModelAtom);
 
     try {
-      const ipcOptions = options?.baseBranch || options?.name ? options : undefined;
+      const ipcOptions = options?.baseBranch || options?.name
+        ? { baseBranch: options?.baseBranch, name: options?.name }
+        : undefined;
       const worktreeResult: WorktreeCreateResult = await window.electronAPI.invoke(
         'worktree:create',
         workspacePath,
@@ -467,6 +476,7 @@ export const createNewWorktreeSessionActionAtom = atom(
       }
 
       const worktree = worktreeResult.worktree;
+      const sessionTitle = options?.title || `Worktree: ${worktree.name}`;
       const sessionId = crypto.randomUUID();
       const parsedModel = defaultModel ? ModelIdentifier.tryParse(defaultModel) : null;
       const provider = parsedModel?.provider || 'claude-code';
@@ -475,7 +485,7 @@ export const createNewWorktreeSessionActionAtom = atom(
           id: sessionId,
           provider,
           model: defaultModel,
-          title: `Worktree: ${worktree.name}`,
+          title: sessionTitle,
           worktreeId: worktree.id,
         },
         workspaceId: workspacePath,
@@ -484,7 +494,7 @@ export const createNewWorktreeSessionActionAtom = atom(
       if (result.success && result.id) {
         set(addSessionFullAtom, {
           id: result.id,
-          title: `Worktree: ${worktree.name}`,
+          title: sessionTitle,
           createdAt: Date.now(),
           updatedAt: Date.now(),
           provider,
@@ -503,14 +513,33 @@ export const createNewWorktreeSessionActionAtom = atom(
           type: 'worktree',
           worktreeId: worktree.id,
         });
-        set(setSelectedWorkstreamAtom, {
-          workspacePath,
-          selection: { type: 'worktree', id: result.id },
-        });
+        return { sessionId: result.id, worktree };
       }
+      return null;
     } catch (error) {
       console.error('[sessionHistoryActions] Failed to create worktree session:', error);
       throw error;
+    }
+  },
+);
+
+/**
+ * Create a new worktree + session and navigate to it. Public action used by
+ * the New Worktree button (SessionHistory) and AgentMode. Gated by
+ * `worktreesFeatureAvailableAtom` and the per-workspace `isGitRepoAtom`.
+ */
+export const createNewWorktreeSessionActionAtom = atom(
+  null,
+  async (get, set, options?: { baseBranch?: string; name?: string }) => {
+    const res = await set(createWorktreeWithSessionCoreActionAtom, options);
+    if (res) {
+      const workspacePath = getWorkspacePath(get);
+      if (workspacePath) {
+        set(setSelectedWorkstreamAtom, {
+          workspacePath,
+          selection: { type: 'worktree', id: res.sessionId },
+        });
+      }
     }
   },
 );

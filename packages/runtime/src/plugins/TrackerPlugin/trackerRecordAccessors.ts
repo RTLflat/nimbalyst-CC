@@ -103,6 +103,18 @@ export function getRecordSortOrder(record: TrackerRecord): string | undefined {
   return record.fields.kanbanSortOrder as string | undefined;
 }
 
+/** Status of a record's automatic preliminary research. */
+export type ResearchStatus = 'running' | 'done' | 'failed';
+
+/**
+ * Get the auto-research status of a record, if any.
+ * Stored as a plain data field `research = { status, startedAt, ... }`.
+ */
+export function getResearchStatus(record: TrackerRecord): ResearchStatus | undefined {
+  const research = record.fields.research as { status?: ResearchStatus } | undefined;
+  return research?.status;
+}
+
 /**
  * Get the FieldDefinition for the field that fulfills a role in a record's type.
  * Falls back to conventional field names when no role is declared.

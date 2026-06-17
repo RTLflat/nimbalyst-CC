@@ -14,6 +14,7 @@ import {
 } from '@nimbalyst/runtime';
 import crypto from 'crypto';
 import { getCurrentIdentity } from './TrackerIdentityService';
+import { TrackerResearchService } from './trackerResearch/TrackerResearchService';
 import { extractFrontmatter, extractCommonFields } from '../utils/frontmatterReader';
 import { VIRTUAL_DOCS, isVirtualPath } from '@nimbalyst/runtime';
 import {
@@ -2208,6 +2209,16 @@ export class ElectronDocumentService implements DocumentService {
       timestamp: new Date(),
     };
     this.trackerItemWatchers.forEach(callback => callback(changeEvent));
+
+    // Kick off background preliminary research (gated inside the service:
+    // user-created native items only). Static import + runtime-only call keeps
+    // the import cycle safe via ES-module live bindings; a dynamic import here
+    // re-ran electron-log init and threw "__ELECTRON_LOG__" double-registration.
+    try {
+      TrackerResearchService.getInstance().onNativeTrackerItemCreated(created.id, this.workspacePath);
+    } catch (researchKickError) {
+      console.warn('[ElectronDocumentService] auto-research kick failed (non-fatal):', researchKickError);
+    }
 
     return created;
   }
