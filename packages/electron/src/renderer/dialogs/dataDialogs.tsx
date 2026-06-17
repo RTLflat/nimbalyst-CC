@@ -13,6 +13,7 @@ import { ErrorDialog } from '../components/ErrorDialog/ErrorDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { SessionImportDialog } from '../components/AgenticCoding/SessionImportDialog';
 import { BlitzDialog } from '../components/BlitzDialog/BlitzDialog';
+import { ConnectGoogleSheetDialog } from './ConnectGoogleSheetDialog';
 import { DIALOG_IDS } from './registry';
 import { store } from '@nimbalyst/runtime/store';
 import { refreshSessionListAtom } from '../store/atoms/sessions';
@@ -40,6 +41,10 @@ export interface SessionImportData {
 export interface BlitzDialogData {
   workspacePath: string;
   onCreated: (result: any) => void;
+}
+
+export interface ConnectGoogleSheetData {
+  workspacePath: string;
 }
 
 export interface ConfirmDialogData {
@@ -178,6 +183,19 @@ function BlitzDialogWrapper({
   );
 }
 
+function ConnectGoogleSheetWrapper({
+  isOpen,
+  onClose,
+  data,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  data: ConnectGoogleSheetData;
+}) {
+  if (!isOpen) return null;
+  return <ConnectGoogleSheetDialog workspacePath={data.workspacePath} onClose={onClose} />;
+}
+
 // Register all data-carrying dialogs
 export function registerDataDialogs() {
   registerDialog<ProjectSelectionData>({
@@ -213,6 +231,13 @@ export function registerDataDialogs() {
     id: DIALOG_IDS.BLITZ_CREATE,
     group: 'system',
     component: BlitzDialogWrapper as DialogConfig<BlitzDialogData>['component'],
+    priority: 100,
+  });
+
+  registerDialog<ConnectGoogleSheetData>({
+    id: DIALOG_IDS.CONNECT_GOOGLE_SHEET,
+    group: 'system',
+    component: ConnectGoogleSheetWrapper as DialogConfig<ConnectGoogleSheetData>['component'],
     priority: 100,
   });
 }
