@@ -1029,10 +1029,10 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
             )}
             <ResearchStatusBadge status={getResearchStatus(item)} />
           </div>
-          {externalOrigin && (() => {
+          {externalOrigin?.providerId && (() => {
             const summary = importerSummaries.find((s) => s.id === externalOrigin.providerId);
             const installed = Boolean(summary);
-            const ref = externalOrigin.urn.includes('://')
+            const ref = externalOrigin.urn?.includes('://')
               ? externalOrigin.urn.split('://')[1]
               : externalOrigin.externalId;
             return (
