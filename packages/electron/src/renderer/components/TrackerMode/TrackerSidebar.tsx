@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime';
+import { useDialog } from '../../contexts/DialogContext';
+import { useSheetImport } from './useSheetImport';
 import type { TrackerItemType } from '@nimbalyst/runtime';
 import { trackerItemCountByTypeAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import type { TrackerDataModel } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
@@ -46,6 +48,13 @@ export const TrackerSidebar: React.FC<TrackerSidebarProps> = ({
   onToggleFilter,
   onViewModeChange,
 }) => {
+  const { open: openDialog } = useDialog();
+  const openConnect = useCallback(
+    () => openDialog('connect-google-sheet', { workspacePath }),
+    [openDialog, workspacePath],
+  );
+  const { runImport } = useSheetImport(workspacePath ?? '', openConnect);
+
   return (
     <div className="tracker-sidebar w-full h-full flex flex-col bg-nim-secondary overflow-hidden" data-testid="tracker-sidebar">
       {workspacePath && (
@@ -97,8 +106,18 @@ export const TrackerSidebar: React.FC<TrackerSidebarProps> = ({
           }
         />
       )}
-      <div className="px-3 py-1.5 border-b border-nim text-[11px] font-semibold text-nim-muted uppercase tracking-wider">
-        Trackers
+      <div className="px-3 py-1.5 border-b border-nim flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-nim-muted uppercase tracking-wider">
+          Trackers
+        </span>
+        <button
+          className="flex items-center justify-center w-5 h-5 text-nim-muted hover:text-nim transition-colors"
+          data-testid="tracker-sidebar-import"
+          title="Import from Google Sheet"
+          onClick={() => void runImport()}
+        >
+          <MaterialSymbol icon="table_view" size={14} />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">

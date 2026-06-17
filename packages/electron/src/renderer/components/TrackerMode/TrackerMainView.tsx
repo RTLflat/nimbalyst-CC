@@ -42,6 +42,8 @@ import { isGitRepoAtom, createWorktreeWithSessionCoreActionAtom } from '../../st
 import { WorktreeBaseBranchPicker } from '../AgenticCoding/WorktreeBaseBranchPicker';
 import { useFloatingMenu } from '../../hooks/useFloatingMenu';
 import { buildTrackerTagOptions, filterTrackerItemsByTags } from './trackerTagFilterUtils';
+import { useDialog } from '../../contexts/DialogContext';
+import { useSheetImport } from './useSheetImport';
 
 export type ViewMode = 'list' | 'table' | 'kanban';
 
@@ -638,6 +640,24 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
 
+  // Sheet import
+  const { open: openDialog } = useDialog();
+  const openConnect = useCallback(
+    () => openDialog('connect-google-sheet', { workspacePath }),
+    [openDialog, workspacePath],
+  );
+  const { runImport, lastResult } = useSheetImport(workspacePath ?? '', openConnect);
+
+  useEffect(() => {
+    if (lastResult) {
+      setImportStatus(
+        `Imported ${lastResult.created} item(s)` +
+        (lastResult.skipped ? `, ${lastResult.skipped} skipped` : '') +
+        (lastResult.alreadyImported ? `, ${lastResult.alreadyImported} already imported` : ''),
+      );
+    }
+  }, [lastResult]);
+
   // External-source importers (GitHub, ...) discovered from installed extensions.
   const [externalImporters, setExternalImporters] = useState<
     Array<{ id: string; displayName: string; icon: string; importsAs?: string[] }>
@@ -956,6 +976,15 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
                   Import from {imp.displayName}
                 </button>
               ))}
+              <div className="my-1 border-t border-nim" />
+              <button
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-nim-muted hover:bg-nim-tertiary hover:text-nim text-left"
+                data-testid="tracker-import-google-sheet"
+                onClick={() => { setImportMenuOpen(false); void runImport(); }}
+              >
+                <MaterialSymbol icon="table_view" size={14} />
+                From Google Sheet
+              </button>
             </div>
           )}
         </div>
