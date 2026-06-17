@@ -14,9 +14,11 @@ export function formatIssueKey(prefix: string, num: number): string {
 }
 
 export function nextNumberFromKeys(keys: string[], prefix: string): number {
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`^${escaped}-(\\d+)$`);
   let max = 0;
   for (const k of keys) {
-    const m = k.match(new RegExp(`^${prefix}-(\\d+)$`));
+    const m = k.match(re);
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
   return max + 1;

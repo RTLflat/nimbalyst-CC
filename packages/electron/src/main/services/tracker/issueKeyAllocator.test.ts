@@ -8,6 +8,9 @@ describe('issue key allocation', () => {
     expect(prefixForType('task', 'NIM')).toBe('TASK');
     expect(prefixForType('something', 'NIM')).toBe('SOMETHING');
   });
+  it('falls back to the provided prefix for an empty type', () => {
+    expect(prefixForType('', 'NIM')).toBe('NIM');
+  });
   it('zero-pads to three digits', () => {
     expect(formatIssueKey('BUG', 1)).toBe('BUG-001');
     expect(formatIssueKey('BUG', 42)).toBe('BUG-042');
