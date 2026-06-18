@@ -639,7 +639,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
         {
           resolveModelVariant: () => this.resolveModelVariant(),
           mcpConfigService: this.mcpConfigService,
-          createCanUseToolHandler: (sid, wp, pp) => this.createCanUseToolHandler(sid, wp, pp),
+          createCanUseToolHandler: (sid, wp, pp, tn, itp) => this.createCanUseToolHandler(sid, wp, pp, tn, itp),
           toolHooksService: this.toolHooksService!,
           teammateManager: this.teammateManager,
           sessions: this.sessions,
