@@ -18,6 +18,25 @@ export function composeBody(commandFeature: string, description: string): string
   return cf ? `**Affected command / feature:** ${cf}\n\n${body}` : body;
 }
 
+/** Pull a human-readable failure reason out of a tracker tool result. */
+export function extractCreateFailureReason(res: {
+  content?: Array<{ text?: string }>;
+}): string {
+  const text = res.content?.[0]?.text;
+  if (!text) return 'Create failed (no detail)';
+  // Schema-validation failures return JSON with a `summary` field; create
+  // errors return a plain string. Try JSON first, fall back to the raw text.
+  try {
+    const parsed = JSON.parse(text) as { summary?: string };
+    if (parsed && typeof parsed.summary === 'string' && parsed.summary.trim()) {
+      return parsed.summary.trim();
+    }
+  } catch {
+    // not JSON — fall through
+  }
+  return text.trim();
+}
+
 export async function importFromSheet(workspacePath: string): Promise<SheetImportResult> {
   const cfg = getWorkspaceState(workspacePath).googleSheetIntegration;
   if (!cfg?.webAppUrl) throw new Error('No Google Sheet connected for this workspace');
@@ -62,7 +81,7 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
       // skipped counts both validation rejections (above) and create failures (here);
       // the specific reason is recorded in errors[].
       result.skipped++;
-      result.errors.push({ rowId: row.rowId, reason: 'Create failed' });
+      result.errors.push({ rowId: row.rowId, reason: extractCreateFailureReason(res) });
       continue;
     }
     result.created++;
