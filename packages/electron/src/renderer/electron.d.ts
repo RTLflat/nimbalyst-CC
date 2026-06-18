@@ -1434,7 +1434,7 @@ interface ElectronAPI {
 
   // Google Sheet tracker import
   trackerSheets: {
-    getConfig: (workspacePath: string) => Promise<{ webAppUrl: string; accessToken?: string } | null>;
+    getConfig: (workspacePath: string) => Promise<{ webAppUrl: string } | null>;
     connect: (workspacePath: string, webAppUrl: string, accessToken?: string) => Promise<{ ok: true; formUrl: string }>;
     import: (workspacePath: string) => Promise<{ created: number; skipped: number; alreadyImported: number; errors: Array<{ rowId: string; reason: string }> }>;
   };

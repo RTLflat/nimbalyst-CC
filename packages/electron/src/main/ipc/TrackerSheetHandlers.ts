@@ -11,7 +11,11 @@ export function normalizeWebAppUrl(input: string): string {
 
 export function registerTrackerSheetHandlers(): void {
   safeHandle('tracker:sheet-get-config', (_e, workspacePath: string) => {
-    return getWorkspaceState(workspacePath).googleSheetIntegration ?? null;
+    const cfg = getWorkspaceState(workspacePath).googleSheetIntegration;
+    if (!cfg?.webAppUrl) return null;
+    // Never return the access token to the renderer — nothing there uses it,
+    // and the import runs main-side. See plans/002.
+    return { webAppUrl: cfg.webAppUrl };
   });
 
   safeHandle(
