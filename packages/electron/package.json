@@ -350,6 +350,10 @@
           "**/vite.config.ts",
           "**/src/**"
         ]
+      },
+      {
+        "from": "resources/skills-plugins",
+        "to": "skills-plugins"
       }
     ],
     "afterSign": "build/afterSign.js",
