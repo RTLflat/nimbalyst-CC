@@ -14,6 +14,16 @@ export async function completeTrackerPlan(args: {
   planSummary?: string;
 }): Promise<{ planPath: string }> {
   const canonical = planAbsolutePath(args.workspacePath, args.issueKey);
+
+  const workspaceRoot = path.resolve(args.workspacePath);
+  const requested = path.resolve(args.planFilePath);
+  const rel = path.relative(workspaceRoot, requested);
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+    throw new Error(
+      `tracker_plan_save: plan path must be inside the workspace (got "${args.planFilePath}")`,
+    );
+  }
+
   const content = await fs.readFile(args.planFilePath, 'utf-8');
 
   if (path.resolve(args.planFilePath) !== path.resolve(canonical)) {

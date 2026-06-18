@@ -20,6 +20,8 @@ vi.mock('@nimbalyst/runtime/storage/repositories/AISessionsRepository', () => ({
 import { completeTrackerPlan } from './completeTrackerPlan';
 import { handleTrackerUpdate } from '../../mcp/tools/trackerToolHandlers';
 import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
+import fs from 'fs/promises';
+import path from 'path';
 
 beforeEach(() => { updates.length = 0; vi.clearAllMocks(); });
 
@@ -89,5 +91,40 @@ describe('completeTrackerPlan', () => {
     ).rejects.toThrow('id-err');
 
     expect(AISessionsRepository.updateMetadata).not.toHaveBeenCalled();
+  });
+
+  // --- path-containment guard ---
+
+  it('rejects a plan path outside the workspace and does NOT call fs.readFile', async () => {
+    const outsidePath = path.resolve('/ws', '..', '..', 'outside.md');
+    await expect(
+      completeTrackerPlan({
+        itemId: 'id-traversal', issueKey: 'BUG-T', workspacePath: '/ws',
+        sessionId: 's-traversal', planFilePath: outsidePath,
+      }),
+    ).rejects.toThrow('tracker_plan_save: plan path must be inside the workspace');
+
+    expect(fs.readFile).not.toHaveBeenCalled();
+  });
+
+  it('accepts the canonical plan path (in-workspace)', async () => {
+    await expect(
+      completeTrackerPlan({
+        itemId: 'id-canonical', issueKey: 'BUG-C', workspacePath: '/ws',
+        sessionId: 's-canonical', planFilePath: '/ws/nimbalyst-local/plans/BUG-C-plan.md',
+      }),
+    ).resolves.not.toThrow();
+  });
+
+  it('accepts an in-workspace non-canonical path and copies it to the canonical location', async () => {
+    const nonCanonical = '/ws/some-other-dir/my-plan.md';
+    const res = await completeTrackerPlan({
+      itemId: 'id-nc', issueKey: 'BUG-NC', workspacePath: '/ws',
+      sessionId: 's-nc', planFilePath: nonCanonical,
+    });
+    // The canonical path (not the input path) is returned
+    expect(res.planPath).toBe('/ws/nimbalyst-local/plans/BUG-NC-plan.md');
+    // writeFile was called to copy content to canonical
+    expect(fs.writeFile).toHaveBeenCalled();
   });
 });
