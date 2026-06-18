@@ -86,7 +86,7 @@ import { SessionFilesRepository } from '@nimbalyst/runtime';
 import { buildToolPermissionResponseRecord } from './claudeCliToolPermission';
 import { isTrackerPlanSession } from '../trackerPlan/isTrackerPlanSession';
 import { handleTrackerPlanExitApproval } from '../trackerPlan/handleTrackerPlanExitApproval';
-import { onPlanApproved } from '../trackerPlan/onPlanApproved';
+import { completeTrackerPlan } from '../trackerPlan/completeTrackerPlan';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -2395,7 +2395,7 @@ export class AIService {
                     return { planFilePath: '', planSummary: undefined };
                   }
                 },
-                onPlanApproved,
+                onPlanApproved: completeTrackerPlan,
                 resolveConfirmation: (reqId, resolvedResponse) => {
                   (provider as any).resolveExitPlanModeConfirmation(reqId, resolvedResponse, sessionId, 'desktop');
                 },
