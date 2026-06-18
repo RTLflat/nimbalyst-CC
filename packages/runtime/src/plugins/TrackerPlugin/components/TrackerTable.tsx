@@ -845,8 +845,7 @@ export function TrackerTable({
     return sorted;
   }, []);
 
-  const filteredItems = items
-    .filter(item => {
+  const filteredItems = useMemo(() => items.filter(item => {
       // Apply search filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -889,10 +888,13 @@ export function TrackerTable({
       }
 
       return true;
-    });
+    }), [items, searchTerm, activeTypeFilter, statusFilter, priorityFilter, customFieldFilters]);
 
   // console.log('[TrackerTable] Render - items:', items.length, 'filtered:', filteredItems.length, 'typeFilter:', typeFilter);
-  const sortedItems = sortItems(filteredItems, currentSortBy, currentSortDirection);
+  const sortedItems = useMemo(
+    () => sortItems(filteredItems, currentSortBy, currentSortDirection),
+    [sortItems, filteredItems, currentSortBy, currentSortDirection],
+  );
 
   // Row interaction model -- shared with TrackerTableGrid via useTrackerRows.
   const rows = useTrackerRows({
