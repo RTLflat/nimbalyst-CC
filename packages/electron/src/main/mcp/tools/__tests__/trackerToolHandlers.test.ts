@@ -951,3 +951,56 @@ describe('session metadata parsing on SQLite (NIM-829)', () => {
     expect(written.linkedTrackerItemIds).toEqual(['bug_b']);
   });
 });
+
+describe('handleTrackerCreate issue-key allocation retry', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+  });
+
+  it('retries issue-key allocation when the first UPDATE throws a unique-constraint error', async () => {
+    // Simulate a concurrent create that claimed NIM-001 between our SELECT and UPDATE.
+    // Attempt 1: allocateIssueKey sees no existing keys → picks NIM-001 → UPDATE throws.
+    // Attempt 2: allocateIssueKey sees NIM-001 already exists → picks NIM-002 → UPDATE succeeds.
+    const baseRow = makeRow({
+      id: 'bug_retry',
+      workspace: '/tmp/ws',
+      issue_key: null,
+      issue_number: null,
+    });
+    const resolvedRow = { ...baseRow, issue_key: 'NIM-002', issue_number: 2 };
+
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })           // INSERT
+      .mockResolvedValueOnce({ rows: [baseRow] })    // resolveTrackerRowByReference (initial)
+      // attempt 1: allocateIssueKey SELECT — no existing keys → next = NIM-001
+      .mockResolvedValueOnce({ rows: [] })
+      // attempt 1: UPDATE — throws unique constraint
+      .mockRejectedValueOnce(new Error('UNIQUE constraint failed: tracker_items.workspace, tracker_items.issue_key'))
+      // attempt 2: allocateIssueKey SELECT — NIM-001 now exists → next = NIM-002
+      .mockResolvedValueOnce({ rows: [{ issue_key: 'NIM-001' }] })
+      // attempt 2: UPDATE — succeeds
+      .mockResolvedValueOnce({ rows: [] })
+      // resolveTrackerRowByReference after successful UPDATE
+      .mockResolvedValueOnce({ rows: [resolvedRow] })
+      // notifyTrackerItemAdded SELECT
+      .mockResolvedValueOnce({ rows: [resolvedRow] });
+
+    const result = await handleTrackerCreate(
+      { type: 'bug', title: 'Retry bug' },
+      '/tmp/ws',
+      undefined,
+    );
+
+    expect(result.isError).toBe(false);
+    const payload = JSON.parse(result.content[0].text!);
+    // The retry must have recovered: the item has an issueKey, not null.
+    expect(payload.structured.item.issueKey).toBe('NIM-002');
+    // Two separate UPDATE issue_key calls were attempted.
+    const updateCalls = mockQuery.mock.calls.filter((c) =>
+      String(c[0]).includes('UPDATE tracker_items SET issue_number'),
+    );
+    expect(updateCalls).toHaveLength(2);
+  });
+});

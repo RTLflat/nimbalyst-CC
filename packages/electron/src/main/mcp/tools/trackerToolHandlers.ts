@@ -1713,16 +1713,23 @@ export async function handleTrackerCreate(
 
     // Allocate a local issue key if sync didn't assign one
     if (createdRow && !createdRow.issue_key) {
-      try {
-        const { issueNumber, issueKey } = await allocateIssueKey(db, workspacePath || '', args.type);
-        await db.query(
-          `UPDATE tracker_items SET issue_number = $1, issue_key = $2 WHERE id = $3`,
-          [issueNumber, issueKey, id]
-        );
-        createdRow = await resolveTrackerRowByReference(db, id, workspacePath);
-        createdItem = createdRow ? rowToTrackerItem(createdRow) : createdItem;
-      } catch (issueKeyError) {
-        console.error('[MCP Server] Local issue key allocation failed:', issueKeyError);
+      const MAX_ISSUE_KEY_ATTEMPTS = 5;
+      for (let attempt = 1; attempt <= MAX_ISSUE_KEY_ATTEMPTS; attempt++) {
+        try {
+          const { issueNumber, issueKey } = await allocateIssueKey(db, workspacePath || '', args.type);
+          await db.query(
+            `UPDATE tracker_items SET issue_number = $1, issue_key = $2 WHERE id = $3`,
+            [issueNumber, issueKey, id]
+          );
+          createdRow = await resolveTrackerRowByReference(db, id, workspacePath);
+          createdItem = createdRow ? rowToTrackerItem(createdRow) : createdItem;
+          break; // success
+        } catch (issueKeyError) {
+          if (attempt >= MAX_ISSUE_KEY_ATTEMPTS) {
+            console.error('[MCP Server] Local issue key allocation failed after retries:', issueKeyError);
+          }
+          // Otherwise a concurrent create likely took this key; loop and re-allocate.
+        }
       }
     }
 
