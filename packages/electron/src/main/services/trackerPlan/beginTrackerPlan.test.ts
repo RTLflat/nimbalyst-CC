@@ -63,4 +63,17 @@ describe('beginTrackerPlan', () => {
     const secondArg = (handleTrackerUpdate as any).mock.calls[0][1];
     expect(secondArg).toBe('/my/workspace');
   });
+
+  it('throws when handleTrackerUpdate returns isError:true', async () => {
+    (handleTrackerUpdate as any).mockResolvedValueOnce({ isError: true });
+
+    await expect(
+      beginTrackerPlan({
+        itemId: 'item-err',
+        sessionId: 'sess-err',
+        workspacePath: '/ws',
+        priorStatus: 'to-do',
+      }),
+    ).rejects.toThrow('item-err');
+  });
 });

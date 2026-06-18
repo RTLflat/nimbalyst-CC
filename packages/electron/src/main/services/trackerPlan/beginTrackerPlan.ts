@@ -7,7 +7,7 @@ export async function beginTrackerPlan(args: {
   workspacePath: string;
   priorStatus: string;
 }): Promise<void> {
-  await handleTrackerUpdate(
+  const result = await handleTrackerUpdate(
     {
       id: args.itemId,
       status: 'planning',
@@ -21,4 +21,7 @@ export async function beginTrackerPlan(args: {
     },
     args.workspacePath,
   );
+  if (result?.isError) {
+    throw new Error(`beginTrackerPlan: failed to update tracker item ${args.itemId}`);
+  }
 }

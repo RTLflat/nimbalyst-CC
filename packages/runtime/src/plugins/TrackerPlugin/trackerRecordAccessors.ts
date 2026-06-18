@@ -139,6 +139,14 @@ export function getPriorityOptions(type: string): Array<{ value: string; label: 
   return fieldDef?.options ?? [];
 }
 
+/**
+ * Whether the given tracker type supports planning (i.e., has a 'planning' status option).
+ * Used to gate the "Plan this item" action to applicable types only.
+ */
+export function typeSupportsPlanning(type: string): boolean {
+  return getStatusOptions(type).some(o => o.value === 'planning');
+}
+
 // ---------------------------------------------------------------------------
 // Identity matching
 // ---------------------------------------------------------------------------

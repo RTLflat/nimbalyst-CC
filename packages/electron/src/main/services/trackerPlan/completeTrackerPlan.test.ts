@@ -77,4 +77,17 @@ describe('completeTrackerPlan', () => {
     });
     expect(res.planPath).toBe('/ws/nimbalyst-local/plans/BUG-999-plan.md');
   });
+
+  it('throws when handleTrackerUpdate returns isError:true and does NOT archive the session', async () => {
+    (handleTrackerUpdate as any).mockResolvedValueOnce({ isError: true });
+
+    await expect(
+      completeTrackerPlan({
+        itemId: 'id-err', issueKey: 'BUG-ERR', workspacePath: '/ws',
+        sessionId: 's-err', planFilePath: '/ws/nimbalyst-local/plans/BUG-ERR-plan.md',
+      }),
+    ).rejects.toThrow('id-err');
+
+    expect(AISessionsRepository.updateMetadata).not.toHaveBeenCalled();
+  });
 });

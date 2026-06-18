@@ -23,7 +23,7 @@ export async function completeTrackerPlan(args: {
 
   const summary = (args.planSummary && args.planSummary.trim()) || extractSummary(content) || 'Implementation plan generated.';
 
-  await handleTrackerUpdate(
+  const result = await handleTrackerUpdate(
     {
       id: args.itemId,
       status: 'ready',
@@ -40,6 +40,9 @@ export async function completeTrackerPlan(args: {
     },
     args.workspacePath,
   );
+  if (result?.isError) {
+    throw new Error(`completeTrackerPlan: failed to update tracker item ${args.itemId}`);
+  }
 
   await AISessionsRepository.updateMetadata(args.sessionId, { isArchived: true });
 

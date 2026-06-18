@@ -16,7 +16,7 @@ import { $getRoot } from 'lexical';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import type { FieldDefinition } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/TrackerDataModel';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField, typeSupportsPlanning } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
 import { LivePlanBadge } from './LivePlanBadge';
 import { TrackerFieldEditor, type TeamMemberOption } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/TrackerFieldEditor';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
@@ -1346,7 +1346,7 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
                     Launch in Worktree
                   </button>
                 )}
-                {onPlanItem && (
+                {onPlanItem && item && typeSupportsPlanning(item.primaryType) && (
                   <button
                     className="tracker-plan-item-btn flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded text-nim-muted hover:text-nim hover:bg-nim-tertiary transition-colors"
                     onClick={() => onPlanItem(item.id)}

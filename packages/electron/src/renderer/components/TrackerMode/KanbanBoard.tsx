@@ -4,7 +4,7 @@ import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import type { TrackerItemType } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import { globalRegistry, getRoleField } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole, typeSupportsPlanning } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
 import { LivePlanBadge } from './LivePlanBadge';
 import { generateKeyBetween } from '@nimbalyst/runtime/utils/fractionalIndex';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
@@ -831,20 +831,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </button>
           )}
 
-          {onPlanItem && selectedIds.size === 1 && (
-            <button
-              data-testid="tracker-kanban-plan-item"
-              className="tracker-kanban-plan-item-btn w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
-              onClick={() => {
-                const [onlyId] = selectedIds;
-                closeContextMenu();
-                onPlanItem(onlyId);
-              }}
-            >
-              <MaterialSymbol icon="assignment" size={16} />
-              Plan this item
-            </button>
-          )}
+          {onPlanItem && selectedIds.size === 1 && (() => {
+            const [onlyId] = selectedIds;
+            const selectedItem = allItemsRef.current.find(i => i.id === onlyId);
+            if (!selectedItem || !typeSupportsPlanning(selectedItem.primaryType)) return null;
+            return (
+              <button
+                data-testid="tracker-kanban-plan-item"
+                className="tracker-kanban-plan-item-btn w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
+                onClick={() => {
+                  closeContextMenu();
+                  onPlanItem(onlyId);
+                }}
+              >
+                <MaterialSymbol icon="assignment" size={16} />
+                Plan this item
+              </button>
+            );
+          })()}
 
           {onCopyDeepLink && selectedIds.size === 1 && (
             <button
