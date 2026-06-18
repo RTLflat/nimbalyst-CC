@@ -10,20 +10,19 @@ beforeAll(() => {
 
 describe('typeSupportsPlanning', () => {
   // Only types with an explicit 'planning' status option return true.
-  // Currently only 'feature' has been given planning + ready statuses.
-  // bug and task use a simpler to-do/in-progress/in-review/done workflow
-  // and do not have a 'planning' status option.
+  // feature, bug, and task all have planning + ready statuses in the hardcoded
+  // builtinTrackers in ModelLoader.ts (the active runtime source).
 
   it('returns true for feature (has planning status)', () => {
     expect(typeSupportsPlanning('feature')).toBe(true);
   });
 
-  it('returns false for bug (no planning status)', () => {
-    expect(typeSupportsPlanning('bug')).toBe(false);
+  it('returns true for bug (has planning status)', () => {
+    expect(typeSupportsPlanning('bug')).toBe(true);
   });
 
-  it('returns false for task (no planning status)', () => {
-    expect(typeSupportsPlanning('task')).toBe(false);
+  it('returns true for task (has planning status)', () => {
+    expect(typeSupportsPlanning('task')).toBe(true);
   });
 
   it('returns false for decision', () => {
