@@ -1,10 +1,16 @@
 import { getDatabase } from '../../database/initialize';
 
-export async function trackerExists(id: string): Promise<boolean> {
+/**
+ * Batched existence check. Returns the subset of `ids` that already exist as
+ * tracker rows. Uses `IN (...)` so it works on both PGLite and better-sqlite3.
+ */
+export async function findExistingTrackerIds(ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
   const db = getDatabase();
+  const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');
   const res = await db.query<{ id: string }>(
-    `SELECT id FROM tracker_items WHERE id = $1 LIMIT 1`,
-    [id],
+    `SELECT id FROM tracker_items WHERE id IN (${placeholders})`,
+    ids,
   );
-  return res.rows.length > 0;
+  return new Set(res.rows.map((r) => r.id));
 }

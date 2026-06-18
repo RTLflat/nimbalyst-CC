@@ -5,7 +5,7 @@ vi.mock('../../mcp/tools/trackerToolHandlers', () => ({
   handleTrackerCreate: vi.fn(async (args: any) => { created.push(args); return { content: [], isError: false }; }),
 }));
 vi.mock('./AppsScriptSheetClient', () => ({ fetchRows: vi.fn() }));
-vi.mock('./trackerExists', () => ({ trackerExists: vi.fn(async () => false) }));
+vi.mock('./trackerExists', () => ({ findExistingTrackerIds: vi.fn(async () => new Set()) }));
 vi.mock('../../utils/store', () => ({
   getWorkspaceState: () => ({ googleSheetIntegration: { webAppUrl: 'https://x/exec' } }),
 }));
@@ -14,8 +14,9 @@ import { importFromSheet, composeBody, extractCreateFailureReason } from './Trac
 import * as client from './AppsScriptSheetClient';
 import * as exists from './trackerExists';
 import * as handlers from '../../mcp/tools/trackerToolHandlers';
+import { deterministicTrackerId } from './sheetRowId';
 
-beforeEach(() => { created.length = 0; vi.clearAllMocks(); (exists.trackerExists as any).mockResolvedValue(false); });
+beforeEach(() => { created.length = 0; vi.clearAllMocks(); (exists.findExistingTrackerIds as any).mockResolvedValue(new Set()); });
 
 describe('extractCreateFailureReason', () => {
   it('returns the summary field when text is a validation-error JSON string', () => {
@@ -77,10 +78,27 @@ describe('importFromSheet', () => {
     (client.fetchRows as any).mockResolvedValue([
       { rowId: 'r1', type: 'bug', title: 'Crash', commandFeature: '', description: '' },
     ]);
-    (exists.trackerExists as any).mockResolvedValue(true);
+    (exists.findExistingTrackerIds as any).mockImplementation(async (ids: string[]) => new Set(ids));
     const result = await importFromSheet('/ws');
     expect(result.created).toBe(0);
     expect(result.alreadyImported).toBe(1);
     expect(created).toHaveLength(0);
+  });
+
+  it('issues a single existence query regardless of row count', async () => {
+    const webAppUrl = 'https://x/exec';
+    const existingId = deterministicTrackerId(webAppUrl, 'r1');
+    (client.fetchRows as any).mockResolvedValue([
+      { rowId: 'r1', type: 'bug', title: 'Crash', commandFeature: '', description: '' },
+      { rowId: 'r2', type: 'task', title: 'New item', commandFeature: '', description: '' },
+      { rowId: 'r3', type: 'nonsense', title: 'X', commandFeature: '', description: '' },
+    ]);
+    (exists.findExistingTrackerIds as any).mockResolvedValue(new Set([existingId]));
+    (handlers.handleTrackerCreate as any).mockResolvedValue({ content: [], isError: false });
+    const result = await importFromSheet('/ws');
+    expect(exists.findExistingTrackerIds).toHaveBeenCalledTimes(1);
+    expect(result.alreadyImported).toBe(1);
+    expect(result.created).toBe(1);
+    expect(result.skipped).toBe(1);
   });
 });

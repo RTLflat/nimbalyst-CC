@@ -2,7 +2,7 @@ import { handleTrackerCreate } from '../../mcp/tools/trackerToolHandlers';
 import { fetchRows } from './AppsScriptSheetClient';
 import { deterministicTrackerId, googleSheetsOrigin } from './sheetRowId';
 import { CREATABLE_TRACKER_TYPES } from './creatableTypes';
-import { trackerExists } from './trackerExists';
+import { findExistingTrackerIds } from './trackerExists';
 import { getWorkspaceState } from '../../utils/store';
 
 export interface SheetImportResult {
@@ -44,6 +44,16 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
   const rows = await fetchRows(cfg.webAppUrl, cfg.accessToken);
   const result: SheetImportResult = { created: 0, skipped: 0, alreadyImported: 0, errors: [] };
 
+  const candidateIds = rows
+    .filter(
+      (r) =>
+        r.rowId &&
+        CREATABLE_TRACKER_TYPES.includes(r.type as (typeof CREATABLE_TRACKER_TYPES)[number]) &&
+        r.title?.trim(),
+    )
+    .map((r) => deterministicTrackerId(cfg.webAppUrl, r.rowId));
+  const existingIds = await findExistingTrackerIds(candidateIds);
+
   for (const row of rows) {
     if (!row.rowId) {
       result.skipped++;
@@ -62,7 +72,7 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
     }
 
     const id = deterministicTrackerId(cfg.webAppUrl, row.rowId);
-    if (await trackerExists(id)) {
+    if (existingIds.has(id)) {
       result.alreadyImported++;
       continue;
     }
