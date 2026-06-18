@@ -1006,6 +1006,25 @@ export const trackerToolSchemas = [
       required: ["urn"],
     },
   },
+  {
+    name: "tracker_plan_save",
+    description:
+      "Save the completed implementation plan for the current tracker-plan session: records the plan file, rewrites the item description, marks it Ready, and ends the planning session.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        planPath: {
+          type: "string",
+          description: "Absolute path to the written plan file",
+        },
+        summary: {
+          type: "string",
+          description: "2-4 sentence summary of the plan",
+        },
+      },
+      required: ["planPath", "summary"],
+    },
+  },
 ];
 
 export async function handleTrackerList(

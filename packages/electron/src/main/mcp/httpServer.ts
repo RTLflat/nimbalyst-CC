@@ -57,6 +57,7 @@ import {
   handleTrackerGetByUrn,
   trackerToolSchemas,
 } from "./tools/trackerToolHandlers";
+import { handleTrackerPlanSave } from "./tools/trackerPlanSaveTool";
 import {
   handleAskUserQuestion,
   handleToolPermission,
@@ -449,6 +450,9 @@ function createSharedMcpServer(
 
         case "tracker_get_by_urn":
           return handleTrackerGetByUrn(args, workspacePath);
+
+        case "tracker_plan_save":
+          return handleTrackerPlanSave(args, workspacePath, sessionId);
 
         case "feedback_anonymize_text":
           return handleFeedbackAnonymizeText(args, workspacePath);
