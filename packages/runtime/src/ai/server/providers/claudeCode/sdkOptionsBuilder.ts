@@ -12,6 +12,7 @@ import { app } from 'electron';
 import { ClaudeCodeDeps } from './dependencyInjection';
 import { resolveClaudeAgentCliPath } from './cliPathResolver';
 import { DEFAULT_EFFORT_LEVEL } from '../../effortLevels';
+import { getTrackerPlanPluginSpec, TRACKER_PLAN_SKILLS } from './trackerPlanPlugin';
 
 type SessionMode = 'planning' | 'agent' | 'auto' | undefined;
 
@@ -24,7 +25,7 @@ type SDKUserMessage = {
 export interface BuildSdkOptionsDeps {
   resolveModelVariant: () => string;
   mcpConfigService: { getMcpServersConfig: (params: { sessionId?: string; workspacePath: string }) => Promise<Record<string, any>> };
-  createCanUseToolHandler: (sessionId?: string, workspacePath?: string, permissionsPath?: string) => any;
+  createCanUseToolHandler: (sessionId?: string, workspacePath?: string, permissionsPath?: string, teammateName?: string, isTrackerPlan?: boolean) => any;
   toolHooksService: {
     createPreToolUseHook: () => any;
     createPostToolUseHook: () => any;
@@ -56,6 +57,9 @@ export interface BuildSdkOptionsParams {
   permissionsPath?: string;
   mcpConfigWorkspacePath?: string;
   isMetaAgent?: boolean;
+  /** True for `kind:'tracker-plan'` brainstorming sessions. Loads the bundled
+   * nimbalyst-planning plugin + skills and activates the write-scope profile. */
+  isTrackerPlan?: boolean;
 }
 
 /**
@@ -170,6 +174,7 @@ export async function buildSdkOptions(
     permissionsPath,
     mcpConfigWorkspacePath,
     isMetaAgent,
+    isTrackerPlan,
   } = params;
 
   let helperMethod: 'native' | 'custom' = 'native';
@@ -231,7 +236,7 @@ export async function buildSdkOptions(
     settings: {
       ...(ClaudeCodeDeps.planTrackingEnabled && { plansDirectory: 'nimbalyst-local/plans' }),
     },
-    canUseTool: createCanUseToolHandler(sessionId, workspacePath, permissionsPath),
+    canUseTool: createCanUseToolHandler(sessionId, workspacePath, permissionsPath, undefined, isTrackerPlan),
     hooks: {
       'PreToolUse': [{ hooks: [toolHooksService.createPreToolUseHook()] }],
       'PostToolUse': [{ hooks: [toolHooksService.createPostToolUseHook()] }],
@@ -265,6 +270,22 @@ export async function buildSdkOptions(
       }
     } catch (error) {
       console.warn('[CLAUDE-CODE] Failed to load extension plugins:', error);
+    }
+  }
+
+  // Tracker-plan brainstorming sessions: load the bundled nimbalyst-planning
+  // plugin and its skills. NOTE: we deliberately do NOT set
+  // `permissionMode:'plan'` here — plan mode scopes writes to the plan file and
+  // blocks the nimbalyst-local writes brainstorming needs. The non-plan posture
+  // from resolvePermissionMode(currentMode) is correct; the write scope is
+  // enforced separately by the tracker-plan branch in immediateToolDecision.ts.
+  if (isTrackerPlan) {
+    try {
+      options.plugins = [...(options.plugins ?? []), getTrackerPlanPluginSpec()];
+      options.skills = [...TRACKER_PLAN_SKILLS];
+      console.log('[CLAUDE-CODE] Tracker-plan session: loaded nimbalyst-planning plugin + skills (non-plan posture)');
+    } catch (error) {
+      console.warn('[CLAUDE-CODE] Failed to load tracker-plan plugin:', error);
     }
   }
 

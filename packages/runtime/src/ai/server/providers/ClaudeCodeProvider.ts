@@ -599,6 +599,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       const enableAgentTeams = settingsEnv.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === '1';
       const agentRole = await this.getAgentRole(sessionId);
       const isMetaAgent = agentRole === 'meta-agent';
+      const isTrackerPlan = await this.isTrackerPlanSession(sessionId);
       const workflowPreset = isMetaAgent ? await this.getWorkflowPreset(sessionId) : 'default';
       const systemPrompt = this.buildSystemPrompt(documentContext, enableAgentTeams, isMetaAgent, workflowPreset);
 
@@ -659,6 +660,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           permissionsPath,
           mcpConfigWorkspacePath,
           isMetaAgent,
+          isTrackerPlan,
         }
       );
       const { options, promptInput, promptController } = sdkResult;
@@ -2981,7 +2983,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
    *
    * Our job is to show UI, wait for user response, and save patterns if "Always" is chosen.
    */
-  private createCanUseToolHandler(sessionId?: string, workspacePath?: string, permissionsPath?: string, teammateName?: string) {
+  private createCanUseToolHandler(sessionId?: string, workspacePath?: string, permissionsPath?: string, teammateName?: string, isTrackerPlan?: boolean) {
     // Use permissionsPath for trust checks (parent project for worktrees), workspacePath for everything else
     const pathForTrust = permissionsPath || workspacePath;
 
@@ -3004,7 +3006,9 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           input,
           options,
           sessionId,
-          pathForTrust
+          pathForTrust,
+          isTrackerPlan,
+          workspacePath
         );
         if (immediateDecision) {
           result = immediateDecision;
@@ -3046,7 +3050,9 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
     input: any,
     options: { signal: AbortSignal; suggestions?: any[]; toolUseID?: string },
     sessionId: string | undefined,
-    pathForTrust: string | undefined
+    pathForTrust: string | undefined,
+    isTrackerPlan?: boolean,
+    workspacePath?: string
   ): Promise<{ behavior: 'allow' | 'deny'; updatedInput?: any; message?: string } | null> {
     return resolveImmediateToolDecisionHelper(
       {
@@ -3068,6 +3074,8 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
         options,
         sessionId,
         pathForTrust,
+        isTrackerPlan,
+        workspacePath,
       }
     );
   }

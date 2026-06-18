@@ -308,6 +308,28 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
   }
 
   /**
+   * True when the session is a `kind:'tracker-plan'` brainstorming session.
+   * `metadata` is a parsed object on PGLite but may arrive as a JSON string on
+   * SQLite (see DATABASE.md), so parse defensively.
+   */
+  protected async isTrackerPlanSession(sessionId?: string): Promise<boolean> {
+    if (!sessionId) {
+      return false;
+    }
+    try {
+      const session = await AISessionsRepository.get(sessionId);
+      const raw = session?.metadata as unknown;
+      const metadata =
+        typeof raw === 'string'
+          ? (JSON.parse(raw) as Record<string, unknown>)
+          : ((raw as Record<string, unknown> | undefined) ?? {});
+      return metadata?.kind === 'tracker-plan';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Best-effort message logging - doesn't throw on failure
    */
   protected async logAgentMessageBestEffort(
