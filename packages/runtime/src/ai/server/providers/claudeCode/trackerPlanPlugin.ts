@@ -1,5 +1,4 @@
 import path from 'path';
-import { app } from 'electron';
 
 /**
  * Skills provided by the bundled nimbalyst-planning plugin.
@@ -54,7 +53,11 @@ export function getTrackerPlanPluginSpec(
   }
 
   // Dev mode: plugin lives in the source tree under packages/electron/resources
-  const devBase = options.devResourcesBase ?? app.getAppPath();
+  // eslint-disable-next-line global-require
+  const devBase = options.devResourcesBase ?? (() => {
+    const { app } = require('electron') as typeof import('electron');
+    return app.getAppPath();
+  })();
   return {
     type: 'local',
     path: path.join(devBase, 'resources', 'skills-plugins', 'nimbalyst-planning'),
