@@ -1528,6 +1528,18 @@ export async function registerSessionHandlers() {
         }
     });
 
+    // Begin the planning lifecycle for a tracker item
+    safeHandle('tracker:begin-plan', async (_event, payload: { itemId: string; sessionId: string; workspacePath: string; priorStatus: string }) => {
+        try {
+            const { beginTrackerPlan } = await import('../services/trackerPlan/beginTrackerPlan');
+            await beginTrackerPlan(payload);
+            return { success: true };
+        } catch (error) {
+            console.error('[SessionHandlers] Failed to begin tracker plan:', error);
+            return { success: false, error: String(error) };
+        }
+    });
+
     // ============================================================
     // Canonical transcript queries
     // ============================================================

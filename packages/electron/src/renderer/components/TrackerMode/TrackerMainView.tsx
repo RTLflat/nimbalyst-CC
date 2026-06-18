@@ -393,6 +393,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
       const parsedModel = defaultModel ? ModelIdentifier.tryParse(defaultModel) : null;
       const provider = parsedModel?.provider || 'claude-code';
       const title = getRecordTitle(item);
+      const priorStatus = getRecordStatus(item);
 
       // 1. Create the session (metadata.kind marks it as a tracker-plan session)
       await window.electronAPI.invoke('sessions:create', {
@@ -412,6 +413,12 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
 
       // 3. Link the session to the tracker item
       await window.electronAPI.invoke('tracker:link-session', { trackerId: itemId, sessionId });
+
+      // 3a. Move item to planning status and stamp data.plan marker
+      await window.electronAPI.invoke('tracker:begin-plan', { itemId, sessionId, workspacePath, priorStatus });
+
+      // 3b. Set the planning session's board phase
+      await window.electronAPI.invoke('sessions:update-session-metadata', sessionId, { phase: 'planning' });
 
       // 4. Queue the planning prompt
       const prompt = buildPlanningPrompt({
