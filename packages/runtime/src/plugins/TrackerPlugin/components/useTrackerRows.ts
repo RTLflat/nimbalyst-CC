@@ -218,23 +218,23 @@ export function useTrackerRows({
   /** Bulk status update for selected items */
   const handleBulkStatusUpdate = useCallback(async (newStatus: string) => {
     closeContextMenu();
-    const itemsToUpdate = itemsRef.current.filter(i => selectedIds.has(i.id));
-    for (const item of itemsToUpdate) {
-      if (isItemEditable(item)) {
-        await handleFieldUpdate(item, 'status', newStatus);
-      }
-    }
+    const itemsToUpdate = itemsRef.current
+      .filter(i => selectedIds.has(i.id))
+      .filter(isItemEditable);
+    await Promise.all(
+      itemsToUpdate.map(item => handleFieldUpdate(item, 'status', newStatus)),
+    );
   }, [selectedIds, closeContextMenu, isItemEditable, handleFieldUpdate]);
 
   /** Bulk priority update for selected items */
   const handleBulkPriorityUpdate = useCallback(async (newPriority: string) => {
     closeContextMenu();
-    const itemsToUpdate = itemsRef.current.filter(i => selectedIds.has(i.id));
-    for (const item of itemsToUpdate) {
-      if (isItemEditable(item)) {
-        await handleFieldUpdate(item, 'priority', newPriority);
-      }
-    }
+    const itemsToUpdate = itemsRef.current
+      .filter(i => selectedIds.has(i.id))
+      .filter(isItemEditable);
+    await Promise.all(
+      itemsToUpdate.map(item => handleFieldUpdate(item, 'priority', newPriority)),
+    );
   }, [selectedIds, closeContextMenu, isItemEditable, handleFieldUpdate]);
 
   /** Open a document-backed tracker item in the editor */
