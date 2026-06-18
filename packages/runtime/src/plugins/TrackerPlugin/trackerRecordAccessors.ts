@@ -107,8 +107,8 @@ export function getRecordSortOrder(record: TrackerRecord): string | undefined {
  * Get the plan status of a record, if any.
  * Stored as a plain data field `plan = { status, path, summary, ... }`.
  */
-export function getPlanStatus(record: TrackerRecord): 'planned' | undefined {
-  const plan = record.fields.plan as { status?: 'planned' } | undefined;
+export function getPlanStatus(record: TrackerRecord): 'planning' | 'planned' | undefined {
+  const plan = record.fields.plan as { status?: 'planning' | 'planned' } | undefined;
   return plan?.status;
 }
 
