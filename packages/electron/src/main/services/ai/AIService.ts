@@ -87,6 +87,7 @@ import { buildToolPermissionResponseRecord } from './claudeCliToolPermission';
 import { isTrackerPlanSession } from '../trackerPlan/isTrackerPlanSession';
 import { handleTrackerPlanExitApproval } from '../trackerPlan/handleTrackerPlanExitApproval';
 import { completeTrackerPlan } from '../trackerPlan/completeTrackerPlan';
+import { revertAbandonedPlan } from '../trackerPlan/revertAbandonedPlan';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -2318,6 +2319,8 @@ export class AIService {
 
     // Delete session
     safeHandle('ai:deleteSession', async (event, sessionId: string, workspacePath?: string) => {
+      // Revert any in-progress tracker-plan item before the session row is gone.
+      try { await revertAbandonedPlan({ sessionId, workspacePath }); } catch (e) { console.error('[AIService] revertAbandonedPlan failed:', e); }
       const success = await this.sessionManager.deleteSession(sessionId, workspacePath);
 
       // Clean up provider if it exists

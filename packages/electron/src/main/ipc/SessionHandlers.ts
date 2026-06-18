@@ -25,6 +25,7 @@ import {
 } from '../services/ai/gitCommitProposalPromptUtils';
 import { enrichTranscriptMessagesWithToolCallDiffs } from '../services/TranscriptToolCallEnricher';
 import { setSessionPendingPrompt } from '../services/ai/pendingPromptPersistence';
+import { revertAbandonedPlan } from '../services/trackerPlan/revertAbandonedPlan';
 
 // Initialize session manager
 const sessionManager = new SessionManager();
@@ -349,6 +350,7 @@ export async function registerSessionHandlers() {
 
     // Delete session
     safeHandle('session:delete', async (event, sessionId: string) => {
+        try { await revertAbandonedPlan({ sessionId, workspacePath: undefined }); } catch (e) { console.error('[SessionHandlers] revertAbandonedPlan failed:', e); }
         await sessionManager.deleteSession(sessionId);
     });
 
@@ -846,6 +848,9 @@ export async function registerSessionHandlers() {
         try {
             // Destroy any active provider (aborts lead query and kills all teammates)
             ProviderFactory.destroyProvider(sessionId);
+
+            // Revert any in-progress tracker-plan item before the session row is gone.
+            try { await revertAbandonedPlan({ sessionId, workspacePath: undefined }); } catch (e) { console.error('[SessionHandlers] revertAbandonedPlan failed:', e); }
 
             await AISessionsRepository.delete(sessionId);
             return { success: true };
