@@ -4,10 +4,9 @@
  * Pure routing helper. Given the raw `ai_sessions.metadata` value (which is a
  * parsed object on PGLite but may arrive as a JSON string on SQLite — see
  * DATABASE.md), decide whether it identifies a "Plan this item" planning
- * session and, if so, return the tracker binding to drive `onPlanApproved`.
+ * session and, if so, return the tracker binding.
  *
- * Returns null for every non-tracker-plan session so the caller leaves the
- * normal ExitPlanMode behavior completely unchanged.
+ * Returns null for every non-tracker-plan session.
  */
 export function isTrackerPlanSession(
   metadata: unknown,

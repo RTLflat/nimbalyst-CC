@@ -53,13 +53,14 @@ tracker_create({
 
 ## Planning a Tracker Item
 
-The "Plan this item" action (available from an item's detail panel or Kanban card menu) opens a read-only planning session in the current workspace. The agent analyzes the item's title and description, asks clarifying questions, and drafts a full implementation plan with risks and open questions.
+The "Plan this item" action (available from an item's detail panel or Kanban card menu) opens an interactive planning session in the current workspace. The session investigates the codebase, brainstorms the approach, and asks you questions to refine the scope before drafting a full implementation plan.
 
-When you approve the plan:
-- The plan is saved to `nimbalyst-local/plans/<KEY>-plan.md` (e.g., `TASK-42-plan.md`)
-- The item's description is rewritten as a short summary with a link to the plan file
-- A "Planned" chip appears on the item in all tracker views
-- Subsequent worktree dispatches pick up the saved plan automatically, giving the agent a stronger and more focused starting prompt
+Lifecycle:
+- The item moves to **Planning** status when the session starts.
+- The agent explores the code, asks clarifying questions, and writes the plan to `nimbalyst-local/plans/<KEY>-plan.md` (e.g., `TASK-42-plan.md`).
+- When the plan is ready and saved, the item moves to **Ready** and the planning session is archived.
+- The item's description is rewritten as a short summary with a link to the plan file.
+- Dispatching the item to a worktree (via "Proceed" or the worktree menu) moves it to **In Progress** and gives the agent the saved plan as its starting context.
 
 ## Importing Tracker Items from Google Sheets
 

@@ -46,7 +46,7 @@ import { useFloatingMenu } from '../../hooks/useFloatingMenu';
 import { buildTrackerTagOptions, filterTrackerItemsByTags } from './trackerTagFilterUtils';
 import { useDialog } from '../../contexts/DialogContext';
 import { useSheetImport } from './useSheetImport';
-import { buildPlanningPrompt } from '../../../main/services/trackerPlan/planPrompt';
+import { buildPlanSeedPrompt } from './planSeedPrompt';
 
 export type ViewMode = 'list' | 'table' | 'kanban';
 
@@ -400,12 +400,8 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   }, []);
 
   /**
-   * Create a PLANNING-mode session for the given tracker item, queue the
-   * planning prompt, and navigate to the agent panel.
-   *
-   * Critical ordering: planning mode must be set BEFORE the queued prompt is
-   * processed, because AgentToolHooks only intercepts ExitPlanMode when the
-   * session's current mode is 'planning'.
+   * Create a tracker-plan session for the given tracker item, queue the
+   * brainstorming seed prompt, and navigate to the agent panel.
    */
   const handlePlanItem = useCallback(async (itemId: string) => {
     try {
@@ -435,22 +431,18 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
         workspaceId: workspacePath,
       });
 
-      // 2. Set planning mode BEFORE queuing the prompt so AgentToolHooks
-      //    intercepts ExitPlanMode correctly.
-      await window.electronAPI.invoke('sessions:update-metadata', sessionId, { mode: 'planning' });
-
-      // 3. Link the session to the tracker item
+      // 2. Link the session to the tracker item
       await window.electronAPI.invoke('tracker:link-session', { trackerId: itemId, sessionId });
 
-      // 3a. Move item to planning status and stamp data.plan marker
+      // 2a. Move item to planning status and stamp data.plan marker
       await window.electronAPI.invoke('tracker:begin-plan', { itemId, sessionId, workspacePath, priorStatus });
 
-      // 3b. Set the planning session's board phase
+      // 2b. Set the planning session's board phase
       await window.electronAPI.invoke('sessions:update-session-metadata', sessionId, { phase: 'planning' });
 
-      // 4. Queue the planning prompt
-      const prompt = buildPlanningPrompt({
-        itemId,
+      // 4. Queue the brainstorming seed prompt
+      const prompt = buildPlanSeedPrompt({
+        itemKey: key,
         type: item.primaryType,
         title,
         description: getRecordFieldStr(item, 'description') ?? '',
