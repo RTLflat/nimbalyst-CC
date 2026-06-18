@@ -5,6 +5,7 @@ import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerIdentity } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { getRecordTitle, getRecordPriority, getRecordStatus, getRecordFieldStr, getRecordField, getFieldByRole, isMyRecord } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import { buildDispatchPrompt } from './trackerDispatchPrompt';
 import {
   TrackerTable,
@@ -357,6 +358,33 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
       // worktree working dir is resolved server-side from the session's worktreeId.
       await window.electronAPI.invoke('ai:createQueuedPrompt', res.sessionId, prompt);
       await window.electronAPI.invoke('ai:triggerQueueProcessing', res.sessionId, workspacePath || '');
+      // Advance lifecycle: move the session to 'implementing' and the item to 'in-progress'.
+      // Wrapped separately so a hiccup in either doesn't abort the dispatch+navigate.
+      try {
+        await window.electronAPI.invoke('sessions:update-session-metadata', res.sessionId, { phase: 'implementing' });
+      } catch (err) {
+        console.error('[TrackerMainView] Failed to set session phase to implementing:', err);
+      }
+      if (trackerItem) {
+        try {
+          if (trackerItem.source === 'frontmatter' || trackerItem.source === 'import' || trackerItem.source === 'inline') {
+            await window.electronAPI.documentService.updateTrackerItemInFile({
+              itemId: trackerItem.id,
+              updates: { status: 'in-progress' },
+            });
+          } else {
+            const tracker = globalRegistry.get(trackerItem.primaryType);
+            const syncMode = tracker?.sync?.mode || 'local';
+            await window.electronAPI.documentService.updateTrackerItem({
+              itemId: trackerItem.id,
+              updates: { status: 'in-progress' },
+              syncMode,
+            });
+          }
+        } catch (err) {
+          console.error('[TrackerMainView] Failed to set item status to in-progress:', err);
+        }
+      }
       setSelectedWorkstream({
         workspacePath: workspacePath || '',
         selection: { type: 'worktree', id: res.sessionId },
