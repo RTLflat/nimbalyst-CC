@@ -16,8 +16,8 @@ import { $getRoot } from 'lexical';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import type { FieldDefinition } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/TrackerDataModel';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField, getPlanStatus } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
-import { PlanStatusBadge } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/PlanStatusBadge';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { LivePlanBadge } from './LivePlanBadge';
 import { TrackerFieldEditor, type TeamMemberOption } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/TrackerFieldEditor';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
 import { trackerItemByIdAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
@@ -1030,7 +1030,7 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
                 Archived
               </span>
             )}
-            <PlanStatusBadge status={getPlanStatus(item)} />
+            <LivePlanBadge item={item} />
           </div>
           {externalOrigin?.providerId && (() => {
             const summary = importerSummaries.find((s) => s.id === externalOrigin.providerId);

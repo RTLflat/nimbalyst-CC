@@ -4,8 +4,8 @@ import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import type { TrackerItemType } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import { globalRegistry, getRoleField } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole, getPlanStatus } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
-import { PlanStatusBadge } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/PlanStatusBadge';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getStatusOptions, getFieldByRole } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { LivePlanBadge } from './LivePlanBadge';
 import { generateKeyBetween } from '@nimbalyst/runtime/utils/fractionalIndex';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
 import { useDialog } from '../../contexts/DialogContext';
@@ -740,7 +740,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           </span>
                         ) : null; })()}
                         {/* Plan status */}
-                        <PlanStatusBadge status={getPlanStatus(item)} />
+                        <LivePlanBadge item={item} />
                         {/* Owner avatar */}
                         {(() => {
                           const owner = getFieldByRole(item, 'assignee') as string | undefined;
