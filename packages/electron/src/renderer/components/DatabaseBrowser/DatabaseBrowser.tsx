@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { VList } from 'virtua';
 import { copyToClipboard } from '@nimbalyst/runtime';
 import { DatabaseDashboard } from './DatabaseDashboard';
@@ -169,37 +169,45 @@ export function DatabaseBrowser() {
   // Primary keys for the selected table
   const [primaryKeys, setPrimaryKeys] = useState<string[]>([]);
 
-  // Column visibility - persisted in localStorage
-  const [hiddenColumns, setHiddenColumns] = useState<Record<string, Set<string>>>(() => {
-    try {
-      const saved = localStorage.getItem('database-browser-hidden-columns');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Convert arrays back to Sets
-        const result: Record<string, Set<string>> = {};
-        for (const [table, cols] of Object.entries(parsed)) {
-          result[table] = new Set(cols as string[]);
-        }
-        return result;
-      }
-    } catch (err) {
-      console.error('Failed to load hidden columns:', err);
-    }
-    return {};
-  });
+  // Column visibility - persisted via the app-settings store (IPC). Loads async,
+  // so start empty and populate in an effect.
+  const [hiddenColumns, setHiddenColumns] = useState<Record<string, Set<string>>>({});
+  const hiddenColumnsLoaded = useRef(false);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
 
-  // Save hidden columns to localStorage whenever they change
+  // Load hidden columns from app-settings on mount.
   useEffect(() => {
-    try {
-      const toSave: Record<string, string[]> = {};
-      for (const [table, cols] of Object.entries(hiddenColumns)) {
-        toSave[table] = Array.from(cols);
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await window.electronAPI.invoke('app-settings:get', 'database-browser-hidden-columns') as Record<string, string[]> | undefined;
+        if (!cancelled && saved) {
+          // Convert arrays back to Sets
+          const result: Record<string, Set<string>> = {};
+          for (const [table, cols] of Object.entries(saved)) {
+            result[table] = new Set(cols);
+          }
+          setHiddenColumns(result);
+        }
+      } catch (err) {
+        console.error('Failed to load hidden columns:', err);
+      } finally {
+        if (!cancelled) hiddenColumnsLoaded.current = true;
       }
-      localStorage.setItem('database-browser-hidden-columns', JSON.stringify(toSave));
-    } catch (err) {
-      console.error('Failed to save hidden columns:', err);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Save hidden columns to app-settings whenever they change (after initial load,
+  // so the empty initial state doesn't clobber the stored value).
+  useEffect(() => {
+    if (!hiddenColumnsLoaded.current) return;
+    const toSave: Record<string, string[]> = {};
+    for (const [table, cols] of Object.entries(hiddenColumns)) {
+      toSave[table] = Array.from(cols);
     }
+    window.electronAPI.invoke('app-settings:set', 'database-browser-hidden-columns', toSave)
+      .catch((err) => console.error('Failed to save hidden columns:', err));
   }, [hiddenColumns]);
 
   // Load tables on mount

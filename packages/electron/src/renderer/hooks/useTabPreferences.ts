@@ -23,48 +23,28 @@ const STORAGE_KEY = 'tabPreferences';
 export function useTabPreferences() {
   const [preferences, setPreferences] = useState<TabPreferences>(DEFAULT_PREFERENCES);
 
-  // Load preferences from localStorage on mount
+  // Load preferences from the app-settings store on mount (via IPC).
   useEffect(() => {
-    const loadPreferences = () => {
+    let cancelled = false;
+    (async () => {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
+        const saved = await window.electronAPI.invoke('app-settings:get', STORAGE_KEY) as Partial<TabPreferences> | undefined;
+        if (!cancelled && saved) {
+          setPreferences({ ...DEFAULT_PREFERENCES, ...saved });
         }
       } catch (error) {
         console.error('Failed to load tab preferences:', error);
       }
-    };
-
-    loadPreferences();
-
-    // Also listen for storage events (changes from other windows)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
-        } catch (error) {
-          console.error('Failed to parse tab preferences from storage event:', error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  // Save preferences to localStorage
+  // Save preferences to the app-settings store (via IPC).
   const savePreferences = useCallback((newPreferences: Partial<TabPreferences>) => {
     const updated = { ...preferences, ...newPreferences };
     setPreferences(updated);
-    
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to save tab preferences:', error);
-    }
+    window.electronAPI.invoke('app-settings:set', STORAGE_KEY, updated)
+      .catch((error) => console.error('Failed to save tab preferences:', error));
   }, [preferences]);
 
   // Toggle tabs enabled/disabled
@@ -82,11 +62,8 @@ export function useTabPreferences() {
   // Reset to defaults
   const resetToDefaults = useCallback(() => {
     setPreferences(DEFAULT_PREFERENCES);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PREFERENCES));
-    } catch (error) {
-      console.error('Failed to reset tab preferences:', error);
-    }
+    window.electronAPI.invoke('app-settings:set', STORAGE_KEY, DEFAULT_PREFERENCES)
+      .catch((error) => console.error('Failed to reset tab preferences:', error));
   }, []);
 
   return {
