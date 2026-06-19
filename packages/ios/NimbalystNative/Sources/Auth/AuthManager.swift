@@ -211,13 +211,13 @@ public final class AuthManager: ObservableObject {
         // Validate the login matches the paired account.
         // The QR code includes syncEmail so we can check it here.
         let pairedUserId = KeychainManager.getUserId()
-        NSLog("[AuthManager] email=\(email), pairedUserId=\(pairedUserId ?? "nil")")
+        logger.info("handleCallback: email=\(email, privacy: .private), pairedUserId=\(pairedUserId ?? "nil", privacy: .private)")
         if let pairedEmail = pairedUserId,
            pairedEmail.contains("@"),
            !email.isEmpty,
            email.lowercased() != pairedEmail.lowercased() {
             authError = "Wrong account. Sign in with \(pairedEmail) to match your desktop pairing."
-            NSLog("[AuthManager] EMAIL MISMATCH: logged in as \(email), paired with \(pairedEmail)")
+            logger.error("EMAIL MISMATCH: logged in as \(email, privacy: .private), paired with \(pairedEmail, privacy: .private)")
             return
         }
 
@@ -233,7 +233,7 @@ public final class AuthManager: ObservableObject {
             isAuthenticated = true
             self.email = email
             authError = nil
-            NSLog("[AuthManager] Authentication SUCCESS for \(email) orgId=\(orgId)")
+            logger.info("Authentication SUCCESS for \(email, privacy: .private) orgId=\(orgId, privacy: .private)")
         } catch {
             authError = "Failed to store auth session: \(error.localizedDescription)"
             NSLog("[AuthManager] Authentication FAILED: \(error.localizedDescription)")

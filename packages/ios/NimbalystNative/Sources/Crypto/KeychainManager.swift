@@ -180,7 +180,10 @@ enum KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key.rawValue,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+            // ThisDeviceOnly blocks iCloud Keychain sync + encrypted-backup egress;
+            // AfterFirstUnlock (not WhenUnlocked) keeps background sync working after a
+            // reboot once the device has been unlocked once.
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
 
         let status = SecItemAdd(query as CFDictionary, nil)
