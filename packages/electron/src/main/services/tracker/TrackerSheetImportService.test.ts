@@ -7,8 +7,13 @@ vi.mock('../../mcp/tools/trackerToolHandlers', () => ({
 vi.mock('./AppsScriptSheetClient', () => ({ fetchRows: vi.fn() }));
 vi.mock('./trackerExists', () => ({ findExistingTrackerIds: vi.fn(async () => new Set()) }));
 vi.mock('../../utils/store', () => ({
-  getWorkspaceState: () => ({ googleSheetIntegration: { webAppUrl: 'https://x/exec' } }),
+  getWorkspaceState: () => ({
+    googleSheetIntegration: { webAppUrl: 'https://x/exec', accessTokenEnc: 'cipher-blob' },
+  }),
 }));
+// Decryption is exercised in sheetTokenCrypto.test.ts; here we just confirm the
+// importer feeds the decrypted token to fetchRows.
+vi.mock('./sheetTokenCrypto', () => ({ decryptSheetToken: vi.fn(() => 'decrypted-token') }));
 
 import { importFromSheet, composeBody, extractCreateFailureReason } from './TrackerSheetImportService';
 import * as client from './AppsScriptSheetClient';
@@ -58,6 +63,12 @@ describe('importFromSheet', () => {
     expect(result.skipped).toBe(2);
     expect(created[0].type).toBe('bug');
     expect(created[0].description).toContain('**Affected command / feature:** Save cmd');
+  });
+
+  it('fetches rows with the decrypted token, not the stored ciphertext', async () => {
+    (client.fetchRows as any).mockResolvedValue([]);
+    await importFromSheet('/ws');
+    expect(client.fetchRows).toHaveBeenCalledWith('https://x/exec', 'decrypted-token');
   });
 
   it('surfaces the real failure reason from handleTrackerCreate, not the generic string', async () => {

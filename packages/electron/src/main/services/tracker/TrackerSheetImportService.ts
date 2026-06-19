@@ -4,6 +4,7 @@ import { deterministicTrackerId, googleSheetsOrigin } from './sheetRowId';
 import { CREATABLE_TRACKER_TYPES } from './creatableTypes';
 import { findExistingTrackerIds } from './trackerExists';
 import { getWorkspaceState } from '../../utils/store';
+import { decryptSheetToken } from './sheetTokenCrypto';
 
 export interface SheetImportResult {
   created: number;
@@ -41,7 +42,7 @@ export async function importFromSheet(workspacePath: string): Promise<SheetImpor
   const cfg = getWorkspaceState(workspacePath).googleSheetIntegration;
   if (!cfg?.webAppUrl) throw new Error('No Google Sheet connected for this workspace');
 
-  const rows = await fetchRows(cfg.webAppUrl, cfg.accessToken);
+  const rows = await fetchRows(cfg.webAppUrl, decryptSheetToken(cfg));
   const result: SheetImportResult = { created: 0, skipped: 0, alreadyImported: 0, errors: [] };
 
   const candidateIds = rows

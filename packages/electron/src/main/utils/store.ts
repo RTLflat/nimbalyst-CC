@@ -481,6 +481,9 @@ export interface WorkspaceState {
   // Google Sheet integration configuration for this workspace.
   googleSheetIntegration?: {
     webAppUrl: string;
+    /** base64 safeStorage ciphertext of the access token (preferred). */
+    accessTokenEnc?: string;
+    /** Legacy plaintext token — read-only back-compat; never written by new code. */
     accessToken?: string;
   };
   lastUpdated: number;

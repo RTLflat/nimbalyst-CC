@@ -2,6 +2,7 @@ import { safeHandle } from '../utils/ipcRegistry';
 import { getWorkspaceState, updateWorkspaceState } from '../utils/store';
 import { fetchRows } from '../services/tracker/AppsScriptSheetClient';
 import { importFromSheet } from '../services/tracker/TrackerSheetImportService';
+import { encryptSheetToken } from '../services/tracker/sheetTokenCrypto';
 
 export function normalizeWebAppUrl(input: string): string {
   const trimmed = (input || '').trim();
@@ -25,7 +26,8 @@ export function registerTrackerSheetHandlers(): void {
       // Test fetch — throws if the URL/token is wrong; surfaces a clear error to the dialog.
       await fetchRows(webAppUrl, payload.accessToken);
       updateWorkspaceState(payload.workspacePath, (state) => {
-        state.googleSheetIntegration = { webAppUrl, accessToken: payload.accessToken || undefined };
+        const { enc, plain } = encryptSheetToken(payload.accessToken ?? '');
+        state.googleSheetIntegration = { webAppUrl, accessTokenEnc: enc, accessToken: plain };
       });
       return { ok: true as const, formUrl: webAppUrl };
     },
