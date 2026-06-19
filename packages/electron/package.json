@@ -65,7 +65,7 @@
     "@nimbalyst/mockuplm": "*",
     "@nimbalyst/runtime": "*",
     "@openai/codex-sdk": "^0.136.0",
-    "@stytch/vanilla-js": "^5.42.0",
+    "@stytch/vanilla-js": "^6.0.9",
     "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
     "@types/marked": "^5.0.2",

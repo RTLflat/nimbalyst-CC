@@ -3,7 +3,7 @@ Nimbalyst Third-Party Notices
 This file aggregates license and notice texts for third-party packages reachable
 from the Electron app, runtime package, and built-in extensions.
 
-Package count: 863
+Package count: 859
 Packages requiring manual review: 0
 Approved exceptions (non-permissive licenses, manually reviewed): 3
 
@@ -8731,16 +8731,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ================================================================================
-@stytch/core@2.66.1
-Selected license: MIT
-Declared license: MIT
-Install paths: node_modules/@stytch/core
-Issues: No license file found in package directory
-
-No license file found.
-
-================================================================================
-@stytch/vanilla-js@5.45.0
+@stytch/vanilla-js@6.0.9
 Selected license: MIT
 Declared license: MIT
 Install paths: node_modules/@stytch/vanilla-js
@@ -9779,35 +9770,6 @@ Declared license: MIT
 Install paths: node_modules/@types/glob
 
 --- LICENSE (node_modules\@types\glob\LICENSE) ---
-    MIT License
-
-    Copyright (c) Microsoft Corporation.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE
-
-================================================================================
-@types/google-one-tap@1.2.7
-Selected license: MIT
-Declared license: MIT
-Install paths: node_modules/@types/google-one-tap
-
---- LICENSE (node_modules\@types\google-one-tap\LICENSE) ---
     MIT License
 
     Copyright (c) Microsoft Corporation.
@@ -38842,15 +38804,6 @@ Issues: No license file found in package directory
 No license file found.
 
 ================================================================================
-type-fest@4.15.0
-Selected license: MIT
-Declared license: (MIT OR CC0-1.0)
-Install paths: node_modules/type-fest
-Issues: No license file found in package directory
-
-No license file found.
-
-================================================================================
 type-is@1.6.18
 Selected license: MIT
 Declared license: MIT
@@ -39526,23 +39479,6 @@ Declared license: MIT
 Install paths: node_modules/uuid
 
 --- LICENSE.md (node_modules\uuid\LICENSE.md) ---
-The MIT License (MIT)
-
-Copyright (c) 2010-2020 Robert Kieffer and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-================================================================================
-uuid@8.3.2
-Selected license: MIT
-Declared license: MIT
-Install paths: node_modules/@stytch/core/node_modules/uuid
-
---- LICENSE.md (node_modules\@stytch\core\node_modules\uuid\LICENSE.md) ---
 The MIT License (MIT)
 
 Copyright (c) 2010-2020 Robert Kieffer and other contributors

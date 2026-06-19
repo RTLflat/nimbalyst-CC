@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-19T08:20:26.962Z",
+  "generatedAt": "2026-06-19T08:41:39.081Z",
   "scope": {
     "workspaceRoots": [
       "packages/electron",
@@ -30,7 +30,7 @@
     "description": "Production dependencies reachable from Electron, runtime, and built-in extension workspaces."
   },
   "summary": {
-    "packageCount": 863,
+    "packageCount": 859,
     "reviewRequiredCount": 0,
     "approvedExceptionCount": 3,
     "licenseCounts": {
@@ -43,7 +43,7 @@
       "EPL-2.0": 1,
       "ISC": 59,
       "LGPL-3.0": 1,
-      "MIT": 713,
+      "MIT": 709,
       "Python-2.0": 1,
       "SEE LICENSE IN README.md": 1,
       "Unlicense": 2
@@ -3486,30 +3486,9 @@
       "noticeFiles": []
     },
     {
-      "id": "@stytch/core@2.66.1",
-      "name": "@stytch/core",
-      "version": "2.66.1",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [
-        "No license file found in package directory"
-      ],
-      "installPaths": [
-        "node_modules/@stytch/core"
-      ],
-      "resolved": "https://registry.npmjs.org/@stytch/core/-/core-2.66.1.tgz",
-      "licenseFiles": [],
-      "noticeFiles": []
-    },
-    {
-      "id": "@stytch/vanilla-js@5.45.0",
+      "id": "@stytch/vanilla-js@6.0.9",
       "name": "@stytch/vanilla-js",
-      "version": "5.45.0",
+      "version": "6.0.9",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -3523,7 +3502,7 @@
       "installPaths": [
         "node_modules/@stytch/vanilla-js"
       ],
-      "resolved": "https://registry.npmjs.org/@stytch/vanilla-js/-/vanilla-js-5.45.0.tgz",
+      "resolved": "https://registry.npmjs.org/@stytch/vanilla-js/-/vanilla-js-6.0.9.tgz",
       "licenseFiles": [],
       "noticeFiles": []
     },
@@ -4443,31 +4422,6 @@
         {
           "fileName": "LICENSE",
           "relativePath": "node_modules\\@types\\glob\\LICENSE",
-          "text": "    MIT License\n\n    Copyright (c) Microsoft Corporation.\n\n    Permission is hereby granted, free of charge, to any person obtaining a copy\n    of this software and associated documentation files (the \"Software\"), to deal\n    in the Software without restriction, including without limitation the rights\n    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n    copies of the Software, and to permit persons to whom the Software is\n    furnished to do so, subject to the following conditions:\n\n    The above copyright notice and this permission notice shall be included in all\n    copies or substantial portions of the Software.\n\n    THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n    SOFTWARE\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "@types/google-one-tap@1.2.7",
-      "name": "@types/google-one-tap",
-      "version": "1.2.7",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "node_modules/@types/google-one-tap"
-      ],
-      "resolved": "https://registry.npmjs.org/@types/google-one-tap/-/google-one-tap-1.2.7.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE",
-          "relativePath": "node_modules\\@types\\google-one-tap\\LICENSE",
           "text": "    MIT License\n\n    Copyright (c) Microsoft Corporation.\n\n    Permission is hereby granted, free of charge, to any person obtaining a copy\n    of this software and associated documentation files (the \"Software\"), to deal\n    in the Software without restriction, including without limitation the rights\n    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n    copies of the Software, and to permit persons to whom the Software is\n    furnished to do so, subject to the following conditions:\n\n    The above copyright notice and this permission notice shall be included in all\n    copies or substantial portions of the Software.\n\n    THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n    SOFTWARE\n"
         }
       ],
@@ -19933,27 +19887,6 @@
       "noticeFiles": []
     },
     {
-      "id": "type-fest@4.15.0",
-      "name": "type-fest",
-      "version": "4.15.0",
-      "rawLicense": "(MIT OR CC0-1.0)",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [
-        "No license file found in package directory"
-      ],
-      "installPaths": [
-        "node_modules/type-fest"
-      ],
-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.15.0.tgz",
-      "licenseFiles": [],
-      "noticeFiles": []
-    },
-    {
       "id": "type-is@1.6.18",
       "name": "type-is",
       "version": "1.6.18",
@@ -20548,31 +20481,6 @@
         {
           "fileName": "LICENSE.md",
           "relativePath": "node_modules\\uuid\\LICENSE.md",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2010-2020 Robert Kieffer and other contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "uuid@8.3.2",
-      "name": "uuid",
-      "version": "8.3.2",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "node_modules/@stytch/core/node_modules/uuid"
-      ],
-      "resolved": "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE.md",
-          "relativePath": "node_modules\\@stytch\\core\\node_modules\\uuid\\LICENSE.md",
           "text": "The MIT License (MIT)\n\nCopyright (c) 2010-2020 Robert Kieffer and other contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
         }
       ],
