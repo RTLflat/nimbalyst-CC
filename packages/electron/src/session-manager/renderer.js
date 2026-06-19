@@ -1,5 +1,4 @@
 const { ipcRenderer } = require('electron');
-const Store = require('electron-store');
 const path = require('path');
 
 let allSessions = [];

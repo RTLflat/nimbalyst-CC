@@ -80,7 +80,7 @@
     "chokidar": "^4.0.3",
     "diff": "^5.2.0",
     "electron-log": "^5.4.3",
-    "electron-store": "^8.2.0",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "express-rate-limit": "^7.5.1",
     "extract-zip": "^2.0.1",
