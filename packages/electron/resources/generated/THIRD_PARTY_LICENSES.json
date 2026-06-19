@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-17T15:48:22.927Z",
+  "generatedAt": "2026-06-19T08:20:26.962Z",
   "scope": {
     "workspaceRoots": [
       "packages/electron",
@@ -30,20 +30,20 @@
     "description": "Production dependencies reachable from Electron, runtime, and built-in extension workspaces."
   },
   "summary": {
-    "packageCount": 874,
+    "packageCount": 863,
     "reviewRequiredCount": 0,
     "approvedExceptionCount": 3,
     "licenseCounts": {
       "0BSD": 1,
-      "Apache-2.0": 41,
+      "Apache-2.0": 40,
       "BlueOak-1.0.0": 9,
-      "BSD-2-Clause": 7,
-      "BSD-3-Clause": 28,
+      "BSD-2-Clause": 6,
+      "BSD-3-Clause": 27,
       "CC0-1.0": 2,
       "EPL-2.0": 1,
       "ISC": 59,
       "LGPL-3.0": 1,
-      "MIT": 721,
+      "MIT": 713,
       "Python-2.0": 1,
       "SEE LICENSE IN README.md": 1,
       "Unlicense": 2
@@ -2919,9 +2919,9 @@
       "noticeFiles": []
     },
     {
-      "id": "@protobufjs/codegen@2.0.4",
+      "id": "@protobufjs/codegen@2.0.5",
       "name": "@protobufjs/codegen",
-      "version": "2.0.4",
+      "version": "2.0.5",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -2933,7 +2933,7 @@
       "installPaths": [
         "node_modules/@protobufjs/codegen"
       ],
-      "resolved": "https://registry.npmjs.org/@protobufjs/codegen/-/codegen-2.0.4.tgz",
+      "resolved": "https://registry.npmjs.org/@protobufjs/codegen/-/codegen-2.0.5.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -2944,9 +2944,9 @@
       "noticeFiles": []
     },
     {
-      "id": "@protobufjs/eventemitter@1.1.0",
+      "id": "@protobufjs/eventemitter@1.1.1",
       "name": "@protobufjs/eventemitter",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -2958,7 +2958,7 @@
       "installPaths": [
         "node_modules/@protobufjs/eventemitter"
       ],
-      "resolved": "https://registry.npmjs.org/@protobufjs/eventemitter/-/eventemitter-1.1.0.tgz",
+      "resolved": "https://registry.npmjs.org/@protobufjs/eventemitter/-/eventemitter-1.1.1.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -2969,9 +2969,9 @@
       "noticeFiles": []
     },
     {
-      "id": "@protobufjs/fetch@1.1.0",
+      "id": "@protobufjs/fetch@1.1.1",
       "name": "@protobufjs/fetch",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -2983,7 +2983,7 @@
       "installPaths": [
         "node_modules/@protobufjs/fetch"
       ],
-      "resolved": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.0.tgz",
+      "resolved": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.1.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -3013,31 +3013,6 @@
         {
           "fileName": "LICENSE",
           "relativePath": "node_modules\\@protobufjs\\float\\LICENSE",
-          "text": "Copyright (c) 2016, Daniel Wirtz  All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are\nmet:\n\n* Redistributions of source code must retain the above copyright\n  notice, this list of conditions and the following disclaimer.\n* Redistributions in binary form must reproduce the above copyright\n  notice, this list of conditions and the following disclaimer in the\n  documentation and/or other materials provided with the distribution.\n* Neither the name of its author, nor the names of its contributors\n  may be used to endorse or promote products derived from this software\n  without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\nOWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\nSPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\nLIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\nTHEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "@protobufjs/inquire@1.1.0",
-      "name": "@protobufjs/inquire",
-      "version": "1.1.0",
-      "rawLicense": "BSD-3-Clause",
-      "selectedLicense": "BSD-3-Clause",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "node_modules/@protobufjs/inquire"
-      ],
-      "resolved": "https://registry.npmjs.org/@protobufjs/inquire/-/inquire-1.1.0.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE",
-          "relativePath": "node_modules\\@protobufjs\\inquire\\LICENSE",
           "text": "Copyright (c) 2016, Daniel Wirtz  All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are\nmet:\n\n* Redistributions of source code must retain the above copyright\n  notice, this list of conditions and the following disclaimer.\n* Redistributions in binary form must reproduce the above copyright\n  notice, this list of conditions and the following disclaimer in the\n  documentation and/or other materials provided with the distribution.\n* Neither the name of its author, nor the names of its contributors\n  may be used to endorse or promote products derived from this software\n  without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\nOWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\nSPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\nLIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\nTHEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
         }
       ],
@@ -3094,9 +3069,9 @@
       "noticeFiles": []
     },
     {
-      "id": "@protobufjs/utf8@1.1.0",
+      "id": "@protobufjs/utf8@1.1.1",
       "name": "@protobufjs/utf8",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -3108,7 +3083,7 @@
       "installPaths": [
         "node_modules/@protobufjs/utf8"
       ],
-      "resolved": "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz",
+      "resolved": "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.1.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -4724,31 +4699,6 @@
       "noticeFiles": []
     },
     {
-      "id": "@types/node@18.19.130",
-      "name": "@types/node",
-      "version": "18.19.130",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/@types/node"
-      ],
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.130.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE",
-          "relativePath": "packages\\runtime\\node_modules\\@types\\node\\LICENSE",
-          "text": "    MIT License\n\n    Copyright (c) Microsoft Corporation.\n\n    Permission is hereby granted, free of charge, to any person obtaining a copy\n    of this software and associated documentation files (the \"Software\"), to deal\n    in the Software without restriction, including without limitation the rights\n    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n    copies of the Software, and to permit persons to whom the Software is\n    furnished to do so, subject to the following conditions:\n\n    The above copyright notice and this permission notice shall be included in all\n    copies or substantial portions of the Software.\n\n    THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n    SOFTWARE\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
       "id": "@types/node@20.19.33",
       "name": "@types/node",
       "version": "20.19.33",
@@ -5801,9 +5751,9 @@
       "noticeFiles": []
     },
     {
-      "id": "better-sqlite3@12.10.0",
+      "id": "better-sqlite3@12.11.1",
       "name": "better-sqlite3",
-      "version": "12.10.0",
+      "version": "12.11.1",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -5813,13 +5763,13 @@
       "approvalLicense": null,
       "issues": [],
       "installPaths": [
-        "packages/electron/node_modules/better-sqlite3"
+        "node_modules/better-sqlite3"
       ],
-      "resolved": "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-12.10.0.tgz",
+      "resolved": "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-12.11.1.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
-          "relativePath": "packages\\electron\\node_modules\\better-sqlite3\\LICENSE",
+          "relativePath": "node_modules\\better-sqlite3\\LICENSE",
           "text": "The MIT License (MIT)\n\nCopyright (c) 2017 Joshua Wise\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
         }
       ],
@@ -9950,9 +9900,9 @@
       "noticeFiles": []
     },
     {
-      "id": "fast-uri@3.1.0",
+      "id": "fast-uri@3.1.2",
       "name": "fast-uri",
-      "version": "3.1.0",
+      "version": "3.1.2",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -9964,12 +9914,12 @@
       "installPaths": [
         "node_modules/fast-uri"
       ],
-      "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.0.tgz",
+      "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.2.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
           "relativePath": "node_modules\\fast-uri\\LICENSE",
-          "text": "Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae\nCopyright (c) 2021-present The Fastify team\nAll rights reserved.\n\nThe Fastify team members are listed at https://github.com/fastify/fastify#team.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n    * Redistributions of source code must retain the above copyright\n      notice, this list of conditions and the following disclaimer.\n    * Redistributions in binary form must reproduce the above copyright\n      notice, this list of conditions and the following disclaimer in the\n      documentation and/or other materials provided with the distribution.\n    * The names of any contributors may not be used to endorse or promote\n      products derived from this software without specific prior written\n      permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n                                  *   *   *\n\nThe complete list of contributors can be found at:\n- https://github.com/garycourt/uri-js/graphs/contributors"
+          "text": "Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae\nCopyright (c) 2021-present The Fastify team <https://github.com/fastify/fastify#team>\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n    * Redistributions of source code must retain the above copyright\n      notice, this list of conditions and the following disclaimer.\n    * Redistributions in binary form must reproduce the above copyright\n      notice, this list of conditions and the following disclaimer in the\n      documentation and/or other materials provided with the distribution.\n    * The names of any contributors may not be used to endorse or promote\n      products derived from this software without specific prior written\n      permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n                                  *   *   *\n\nThe complete list of contributors can be found at:\n- https://github.com/garycourt/uri-js/graphs/contributors"
         }
       ],
       "noticeFiles": []
@@ -10275,9 +10225,9 @@
       "noticeFiles": []
     },
     {
-      "id": "form-data@4.0.5",
+      "id": "form-data@4.0.6",
       "name": "form-data",
-      "version": "4.0.5",
+      "version": "4.0.6",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -10289,37 +10239,12 @@
       "installPaths": [
         "node_modules/form-data"
       ],
-      "resolved": "https://registry.npmjs.org/form-data/-/form-data-4.0.5.tgz",
+      "resolved": "https://registry.npmjs.org/form-data/-/form-data-4.0.6.tgz",
       "licenseFiles": [
         {
           "fileName": "License",
           "relativePath": "node_modules\\form-data\\License",
           "text": "Copyright (c) 2012 Felix Geisendörfer (felix@debuggable.com) and contributors\n\n Permission is hereby granted, free of charge, to any person obtaining a copy\n of this software and associated documentation files (the \"Software\"), to deal\n in the Software without restriction, including without limitation the rights\n to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n copies of the Software, and to permit persons to whom the Software is\n furnished to do so, subject to the following conditions:\n\n The above copyright notice and this permission notice shall be included in\n all copies or substantial portions of the Software.\n\n THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n THE SOFTWARE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "form-data-encoder@1.7.2",
-      "name": "form-data-encoder",
-      "version": "1.7.2",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/form-data-encoder"
-      ],
-      "resolved": "https://registry.npmjs.org/form-data-encoder/-/form-data-encoder-1.7.2.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "license",
-          "relativePath": "packages\\runtime\\node_modules\\form-data-encoder\\license",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2021-present Nick K.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
         }
       ],
       "noticeFiles": []
@@ -10368,31 +10293,6 @@
       ],
       "resolved": "https://registry.npmjs.org/format/-/format-0.2.2.tgz",
       "licenseFiles": [],
-      "noticeFiles": []
-    },
-    {
-      "id": "formdata-node@4.4.1",
-      "name": "formdata-node",
-      "version": "4.4.1",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/formdata-node"
-      ],
-      "resolved": "https://registry.npmjs.org/formdata-node/-/formdata-node-4.4.1.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "license",
-          "relativePath": "packages\\runtime\\node_modules\\formdata-node\\license",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2017-present Nick K.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
-        }
-      ],
       "noticeFiles": []
     },
     {
@@ -11046,9 +10946,9 @@
       "noticeFiles": []
     },
     {
-      "id": "hasown@2.0.2",
+      "id": "hasown@2.0.4",
       "name": "hasown",
-      "version": "2.0.2",
+      "version": "2.0.4",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -11060,7 +10960,7 @@
       "installPaths": [
         "node_modules/hasown"
       ],
-      "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.2.tgz",
+      "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -11506,9 +11406,9 @@
       "noticeFiles": []
     },
     {
-      "id": "hono@4.12.14",
+      "id": "hono@4.12.26",
       "name": "hono",
-      "version": "4.12.14",
+      "version": "4.12.26",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -11520,7 +11420,7 @@
       "installPaths": [
         "node_modules/hono"
       ],
-      "resolved": "https://registry.npmjs.org/hono/-/hono-4.12.14.tgz",
+      "resolved": "https://registry.npmjs.org/hono/-/hono-4.12.26.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -15626,31 +15526,6 @@
       "noticeFiles": []
     },
     {
-      "id": "node-fetch@2.7.0",
-      "name": "node-fetch",
-      "version": "2.7.0",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/node-fetch"
-      ],
-      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE.md",
-          "relativePath": "packages\\runtime\\node_modules\\node-fetch\\LICENSE.md",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2016 David Frank\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
       "id": "node-fetch@3.3.2",
       "name": "node-fetch",
       "version": "3.3.2",
@@ -15917,31 +15792,6 @@
           "fileName": "license",
           "relativePath": "node_modules\\open\\license",
           "text": "MIT License\n\nCopyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "openai@4.104.0",
-      "name": "openai",
-      "version": "4.104.0",
-      "rawLicense": "Apache-2.0",
-      "selectedLicense": "Apache-2.0",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/openai"
-      ],
-      "resolved": "https://registry.npmjs.org/openai/-/openai-4.104.0.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE",
-          "relativePath": "packages\\runtime\\node_modules\\openai\\LICENSE",
-          "text": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright 2025 OpenAI\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n"
         }
       ],
       "noticeFiles": []
@@ -17174,9 +17024,9 @@
       "noticeFiles": []
     },
     {
-      "id": "protobufjs@7.5.5",
+      "id": "protobufjs@7.6.4",
       "name": "protobufjs",
-      "version": "7.5.5",
+      "version": "7.6.4",
       "rawLicense": "BSD-3-Clause",
       "selectedLicense": "BSD-3-Clause",
       "reviewRequired": false,
@@ -17188,7 +17038,7 @@
       "installPaths": [
         "node_modules/protobufjs"
       ],
-      "resolved": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.5.5.tgz",
+      "resolved": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.4.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -18874,9 +18724,9 @@
       "noticeFiles": []
     },
     {
-      "id": "shell-quote@1.8.3",
+      "id": "shell-quote@1.8.4",
       "name": "shell-quote",
-      "version": "1.8.3",
+      "version": "1.8.4",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -18888,7 +18738,7 @@
       "installPaths": [
         "node_modules/shell-quote"
       ],
-      "resolved": "https://registry.npmjs.org/shell-quote/-/shell-quote-1.8.3.tgz",
+      "resolved": "https://registry.npmjs.org/shell-quote/-/shell-quote-1.8.4.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",
@@ -19912,27 +19762,6 @@
       "noticeFiles": []
     },
     {
-      "id": "tr46@0.0.3",
-      "name": "tr46",
-      "version": "0.0.3",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [
-        "No license file found in package directory"
-      ],
-      "installPaths": [
-        "packages/runtime/node_modules/tr46"
-      ],
-      "resolved": "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz",
-      "licenseFiles": [],
-      "noticeFiles": []
-    },
-    {
       "id": "trim-lines@3.0.1",
       "name": "trim-lines",
       "version": "3.0.1",
@@ -20272,27 +20101,6 @@
           "text": "MIT License\n\nCopyright (c) Matteo Collina and Undici contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
         }
       ],
-      "noticeFiles": []
-    },
-    {
-      "id": "undici-types@5.26.5",
-      "name": "undici-types",
-      "version": "5.26.5",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [
-        "No license file found in package directory"
-      ],
-      "installPaths": [
-        "packages/runtime/node_modules/undici-types"
-      ],
-      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-5.26.5.tgz",
-      "licenseFiles": [],
       "noticeFiles": []
     },
     {
@@ -21192,31 +21000,6 @@
       "noticeFiles": []
     },
     {
-      "id": "web-streams-polyfill@4.0.0-beta.3",
-      "name": "web-streams-polyfill",
-      "version": "4.0.0-beta.3",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/web-streams-polyfill"
-      ],
-      "resolved": "https://registry.npmjs.org/web-streams-polyfill/-/web-streams-polyfill-4.0.0-beta.3.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE",
-          "relativePath": "packages\\runtime\\node_modules\\web-streams-polyfill\\LICENSE",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2021 Mattias Buelens\nCopyright (c) 2016 Diwank Singh Tomer\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
       "id": "web-streams-polyfill@4.2.0",
       "name": "web-streams-polyfill",
       "version": "4.2.0",
@@ -21262,56 +21045,6 @@
           "fileName": "LICENSE",
           "relativePath": "node_modules\\web-vitals\\LICENSE",
           "text": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright 2020 Google LLC\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       https://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "webidl-conversions@3.0.1",
-      "name": "webidl-conversions",
-      "version": "3.0.1",
-      "rawLicense": "BSD-2-Clause",
-      "selectedLicense": "BSD-2-Clause",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/webidl-conversions"
-      ],
-      "resolved": "https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-3.0.1.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE.md",
-          "relativePath": "packages\\runtime\\node_modules\\webidl-conversions\\LICENSE.md",
-          "text": "# The BSD 2-Clause License\n\nCopyright (c) 2014, Domenic Denicola\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
-        }
-      ],
-      "noticeFiles": []
-    },
-    {
-      "id": "whatwg-url@5.0.0",
-      "name": "whatwg-url",
-      "version": "5.0.0",
-      "rawLicense": "MIT",
-      "selectedLicense": "MIT",
-      "reviewRequired": false,
-      "reviewReasons": [],
-      "approved": false,
-      "approvalReason": null,
-      "approvalLicense": null,
-      "issues": [],
-      "installPaths": [
-        "packages/runtime/node_modules/whatwg-url"
-      ],
-      "resolved": "https://registry.npmjs.org/whatwg-url/-/whatwg-url-5.0.0.tgz",
-      "licenseFiles": [
-        {
-          "fileName": "LICENSE.txt",
-          "relativePath": "packages\\runtime\\node_modules\\whatwg-url\\LICENSE.txt",
-          "text": "The MIT License (MIT)\n\nCopyright (c) 2015–2016 Sebastian Mayr\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n"
         }
       ],
       "noticeFiles": []
@@ -21417,9 +21150,9 @@
       "noticeFiles": []
     },
     {
-      "id": "ws@8.19.0",
+      "id": "ws@8.21.0",
       "name": "ws",
-      "version": "8.19.0",
+      "version": "8.21.0",
       "rawLicense": "MIT",
       "selectedLicense": "MIT",
       "reviewRequired": false,
@@ -21431,7 +21164,7 @@
       "installPaths": [
         "node_modules/ws"
       ],
-      "resolved": "https://registry.npmjs.org/ws/-/ws-8.19.0.tgz",
+      "resolved": "https://registry.npmjs.org/ws/-/ws-8.21.0.tgz",
       "licenseFiles": [
         {
           "fileName": "LICENSE",

@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tracker table columns for custom fields (such as PR links, author, and number in the GitHub PRs tracker) no longer render blank.
 - Tracker types shared via team sync now persist across restarts (including synced overrides of built-in types), and synced tracker items no longer silently fail to save on some databases.
 
+### Security
+- Updated bundled dependencies to clear several known security advisories.
+
 ### Removed
 <!-- Removed features go here -->
 
