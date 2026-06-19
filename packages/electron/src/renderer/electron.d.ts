@@ -1432,6 +1432,13 @@ interface ElectronAPI {
   openImageInDefaultApp: (imagePath: string) => Promise<{ success: boolean; error?: string }>;
   startImageDrag: (imagePath: string) => Promise<{ success: boolean; error?: string }>;
 
+  // Google Sheet tracker import
+  trackerSheets: {
+    getConfig: (workspacePath: string) => Promise<{ webAppUrl: string } | null>;
+    connect: (workspacePath: string, webAppUrl: string, accessToken?: string) => Promise<{ ok: true; formUrl: string }>;
+    import: (workspacePath: string) => Promise<{ created: number; skipped: number; alreadyImported: number; errors: Array<{ rowId: string; reason: string }> }>;
+  };
+
   // Generic IPC methods for services
   invoke: (channel: string, ...args: any[]) => Promise<any>;
   send: (channel: string, ...args: any[]) => void;

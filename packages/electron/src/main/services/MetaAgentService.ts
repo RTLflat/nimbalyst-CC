@@ -5,6 +5,7 @@ import { safeHandle } from '../utils/ipcRegistry';
 import { ClaudeCodeProvider, OpenAICodexProvider, OpenAICodexACPProvider, SessionManager } from '@nimbalyst/runtime/ai/server';
 import type { AIProviderType } from '@nimbalyst/runtime/ai/server/types';
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
+import type { EffortLevel } from '@nimbalyst/runtime/ai/server/effortLevels';
 import { AISessionsRepository, AgentMessagesRepository, SessionFilesRepository } from '@nimbalyst/runtime';
 import { getSessionStateManager } from '@nimbalyst/runtime/ai/server/SessionStateManager';
 import { getDefaultAIModel } from '../utils/store';
@@ -69,6 +70,8 @@ interface CreateChildSessionArgs {
   useWorktree?: boolean;
   worktreeId?: string;
   toolScope?: string;
+  /** Per-session reasoning effort; persisted to metadata and applied at turn time. */
+  effortLevel?: EffortLevel;
 }
 
 function normalizeStoredChildModelIdentifier(
@@ -362,6 +365,99 @@ export class MetaAgentService {
     return JSON.stringify(result, null, 2);
   }
 
+  /**
+   * Run a single bounded, READ-ONLY agent turn headlessly (no UI) and return
+   * its final text. Used by background features (e.g. tracker auto-research).
+   * The throwaway child session is deleted afterward so it does not clutter the
+   * session list. Never throws — failures resolve to `{ status: 'failed' }`.
+   *
+   * On a `done` run the agent reached idle on its own. On `partial` the run hit
+   * `timeoutMs` while still working: rather than discard the work, we gracefully
+   * halt the agent and return whatever it gathered so far so the caller can
+   * persist it (flagged non-exhaustive). `failed` means no usable text.
+   */
+  public async runHeadlessReadOnlyTurn(
+    workspaceId: string,
+    prompt: string,
+    opts: { model?: string; effort?: EffortLevel; title?: string; timeoutMs?: number; pollMs?: number } = {},
+  ): Promise<{ status: 'done' | 'partial' | 'failed'; text: string }> {
+    const timeoutMs = opts.timeoutMs ?? 120_000;
+    const pollMs = opts.pollMs ?? 1500;
+    // Orphan parent id: createChildSessionInternal tolerates a missing parent
+    // (falls back to getDefaultAIModel()); this run is not parented to any UI session.
+    const orphanParentId = `headless-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let childId: string | null = null;
+    let halted = false;
+    // Gracefully halt the running turn so it stops streaming. Idempotent: a turn
+    // that overruns timeoutMs is halted before we read its partial output; the
+    // `finally` calls this again only as a safety net for exception paths.
+    // Without the halt, the agent keeps writing ai_agent_messages into the
+    // session we delete below (FOREIGN KEY constraint failed for the whole
+    // remaining run) and burns tokens on output nobody reads.
+    const haltAgent = async () => {
+      if (halted || !childId) return;
+      halted = true;
+      await this.interruptChildSession(childId);
+    };
+    try {
+      const child = await this.createChildSessionInternal(orphanParentId, workspaceId, {
+        prompt,
+        toolScope: 'read',
+        model: opts.model,
+        effortLevel: opts.effort,
+        title: opts.title ?? 'Background research',
+      });
+      childId = child.sessionId;
+
+      const deadline = Date.now() + timeoutMs;
+      let reachedTerminal = false;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, pollMs));
+        const row = await this.getSessionStatusRow(childId, workspaceId);
+        const status = row?.status;
+        if (status === 'idle' || status === 'error') {
+          reachedTerminal = true;
+          break;
+        }
+      }
+
+      // Timed out mid-run: halt gracefully, then read whatever was gathered so
+      // it can be surfaced as a partial result rather than thrown away.
+      if (!reachedTerminal) await haltAgent();
+
+      const result = await this.buildSessionResultData(childId, workspaceId);
+      const text = (result?.fullResponse ?? '').trim();
+
+      if (reachedTerminal) {
+        const ok = result?.status === 'idle' && text.length > 0;
+        return { status: ok ? 'done' : 'failed', text };
+      }
+      return { status: text.length > 0 ? 'partial' : 'failed', text };
+    } catch (err) {
+      console.error('[MetaAgentService] runHeadlessReadOnlyTurn failed:', err);
+      return { status: 'failed', text: '' };
+    } finally {
+      if (childId) {
+        await haltAgent();
+        await this.cleanupChildSession(childId).catch(() => {});
+      }
+    }
+  }
+
+  /** Best-effort graceful halt of a running child turn. Never throws. */
+  private async interruptChildSession(sessionId: string): Promise<void> {
+    try {
+      await this.aiService?.interruptSession(sessionId);
+    } catch (err) {
+      console.warn(`[MetaAgentService] interruptChildSession failed for ${sessionId}:`, err);
+    }
+  }
+
+  /** Delete a throwaway headless research session so it does not linger in the list. */
+  private async cleanupChildSession(sessionId: string): Promise<void> {
+    await AISessionsRepository.delete(sessionId);
+  }
+
   private async createChildSessionInternal(
     metaSessionId: string,
     workspaceId: string,
@@ -410,9 +506,11 @@ export class MetaAgentService {
     // An explicit args.provider/args.model still wins; that is what they are for.
     let parentProvider: string | null = null;
     let parentModel: string | null = null;
+    let parentExists = false;
     try {
       const parentSession = await AISessionsRepository.get(metaSessionId);
       if (parentSession) {
+        parentExists = true;
         parentProvider = parentSession.provider ?? null;
         parentModel = normalizeStoredChildModelIdentifier(parentProvider, parentSession.model ?? null);
       }
@@ -556,7 +654,11 @@ export class MetaAgentService {
       workspaceId,
       worktreeId: worktreeId ?? undefined,
       agentRole: 'standard',
-      createdBySessionId: metaSessionId,
+      // created_by_session_id FK-references ai_sessions(id); a headless/orphan
+      // caller (e.g. background tracker research) passes a parent id that does
+      // not exist, so write null there instead of violating the FK. Normal
+      // meta-agent spawns always have a real parent (parentExists === true).
+      createdBySessionId: parentExists ? metaSessionId : null,
       parentSessionId: args.parentSessionIdOverride ?? null,
       // When the meta-agent (or any caller of spawn_session) supplies an
       // explicit title, treat the session as already named so the out-of-band
@@ -568,10 +670,16 @@ export class MetaAgentService {
     // Read-only tool segregation: persist a restricted capability scope so the
     // child is granted only the matching dev tools at turn time (an analyze
     // child physically cannot run_command, so it cannot build or claim to).
+    // effortLevel is persisted in the same metadata write (AIService reads
+    // metadata.effortLevel at turn time) so a background research child can run
+    // a cheaper model at low effort without inheriting the app default.
     const childToolScope =
       args.toolScope === 'read' || args.toolScope === 'write' ? args.toolScope : undefined;
-    if (childToolScope) {
-      await AISessionsRepository.updateMetadata(sessionId, { metadata: { toolScope: childToolScope } });
+    const childMetadata: Record<string, unknown> = {};
+    if (childToolScope) childMetadata.toolScope = childToolScope;
+    if (args.effortLevel) childMetadata.effortLevel = args.effortLevel;
+    if (Object.keys(childMetadata).length > 0) {
+      await AISessionsRepository.updateMetadata(sessionId, { metadata: childMetadata });
     }
 
     const initialPrompt = args.prompt?.trim();

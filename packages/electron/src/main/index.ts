@@ -19,6 +19,7 @@ import { showSplashScreen, closeSplashScreen } from './window/SplashScreen';
 import { registerFileHandlers } from './ipc/FileHandlers';
 import { registerWorkspaceHandlers } from './ipc/WorkspaceHandlers.ts';
 import { registerSettingsHandlers } from './ipc/SettingsHandlers';
+import { registerTrackerSheetHandlers } from './ipc/TrackerSheetHandlers';
 import { registerWindowHandlers } from './ipc/WindowHandlers';
 import { registerEditorStateHandlers } from './ipc/EditorStateHandlers';
 import { registerHistoryHandlers } from './ipc/HistoryHandlers';
@@ -1410,6 +1411,7 @@ app.whenReady().then(async () => {
     registerWorkspaceHandlers();
     registerWorkspaceWatcherHandlers();
     registerSettingsHandlers();
+    registerTrackerSheetHandlers();
     registerWindowHandlers();
     registerEditorStateHandlers();
     await registerHistoryHandlers();

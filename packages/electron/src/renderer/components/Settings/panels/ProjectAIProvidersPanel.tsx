@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MaterialSymbol, getProviderIcon } from '@nimbalyst/runtime';
 
-interface ProviderOverride {
-  enabled?: boolean;
-  models?: string[];
-  defaultModel?: string;
-  apiKey?: string;
-}
-
-interface AIProviderOverrides {
-  defaultProvider?: string;
-  providers?: Record<string, ProviderOverride>;
-}
+import type { ProviderOverride, AIProviderOverrides } from '../../../../shared/types/aiSettings';
 
 interface GlobalProviderSettings {
   enabled?: boolean;

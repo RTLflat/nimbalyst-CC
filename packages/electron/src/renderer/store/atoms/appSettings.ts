@@ -1563,24 +1563,10 @@ function ensureProviderBroadcastBridge(): void {
 // PHASE 6: Workspace Settings (Atom Families)
 // ============================================================================
 
-/**
- * Provider override for a single provider in a workspace.
- */
-export interface ProviderOverride {
-  enabled?: boolean;
-  models?: string[];
-  defaultModel?: string;
-  apiKey?: string;
-}
-
-/**
- * AI provider overrides for a workspace.
- */
-export interface AIProviderOverrides {
-  defaultProvider?: string;
-  customClaudeCodePath?: string;
-  providers?: Record<string, ProviderOverride>;
-}
+// Canonical, cross-process definitions live in src/shared/types/aiSettings.ts.
+// Imported for local use and re-exported so existing importers from appSettings keep working.
+import type { ProviderOverride, AIProviderOverrides } from '../../../shared/types/aiSettings';
+export type { ProviderOverride, AIProviderOverrides };
 
 /**
  * Workspace AI settings state including loading status.

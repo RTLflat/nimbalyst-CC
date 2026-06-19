@@ -27,6 +27,7 @@ import {
   findImporter,
   type ResolvedImporter,
 } from './trackerImporterDiscovery';
+import { getBuiltInImporter, listBuiltInImporters } from './builtInImporters';
 
 /** Public summary of an importer for UI / MCP. */
 export interface ImporterSummary {
@@ -93,28 +94,37 @@ class TrackerImporterRegistry {
    * prompt). Auth is checked lazily when the user actually imports.
    */
   async listImporters(_workspacePath: string): Promise<ImporterSummary[]> {
+    const toSummary = (c: TrackerImporterContribution): ImporterSummary => ({
+      id: c.id,
+      displayName: c.displayName,
+      icon: c.icon,
+      urnScheme: c.urnScheme,
+      importsAs: c.importsAs,
+      settingsPanelId: c.settingsPanelId,
+    });
+    // Built-in importers (flag-gated; empty when off) sit alongside extension ones.
+    const builtIn = listBuiltInImporters().map((b) => toSummary(b.contribution));
     const importers = await discoverImporters();
-    return importers.map((imp) => ({
-      id: imp.contribution.id,
-      displayName: imp.contribution.displayName,
-      icon: imp.contribution.icon,
-      urnScheme: imp.contribution.urnScheme,
-      importsAs: imp.contribution.importsAs,
-      settingsPanelId: imp.contribution.settingsPanelId,
-    }));
+    return [...builtIn, ...importers.map((imp) => toSummary(imp.contribution))];
   }
 
 
   async getContribution(providerId: string): Promise<TrackerImporterContribution | null> {
+    const builtIn = getBuiltInImporter(providerId);
+    if (builtIn) return builtIn.contribution;
     return (await findImporter(providerId))?.contribution ?? null;
   }
 
   async isAuthenticated(workspacePath: string, providerId: string): Promise<boolean> {
+    const builtIn = getBuiltInImporter(providerId);
+    if (builtIn) return builtIn.create(workspacePath).isAuthenticated();
     const imp = await this.requireImporter(providerId);
     return this.call<boolean>(imp, workspacePath, TRACKER_IMPORTER_RPC_METHODS.isAuthenticated);
   }
 
   async listBindings(workspacePath: string, providerId: string): Promise<ImporterBinding[]> {
+    const builtIn = getBuiltInImporter(providerId);
+    if (builtIn) return builtIn.create(workspacePath).listBindings();
     const imp = await this.requireImporter(providerId);
     return this.call<ImporterBinding[]>(
       imp,
@@ -129,6 +139,8 @@ class TrackerImporterRegistry {
     binding: ImporterBinding,
     filters: ImporterListFilter
   ): Promise<ImporterListPage> {
+    const builtIn = getBuiltInImporter(providerId);
+    if (builtIn) return builtIn.create(workspacePath).list({ binding, filters });
     const imp = await this.requireImporter(providerId);
     return this.call<ImporterListPage>(imp, workspacePath, TRACKER_IMPORTER_RPC_METHODS.list, {
       binding,
@@ -141,6 +153,8 @@ class TrackerImporterRegistry {
     providerId: string,
     externalId: string
   ): Promise<TrackerSnapshot> {
+    const builtIn = getBuiltInImporter(providerId);
+    if (builtIn) return builtIn.create(workspacePath).fetch({ externalId });
     const imp = await this.requireImporter(providerId);
     return this.call<TrackerSnapshot>(imp, workspacePath, TRACKER_IMPORTER_RPC_METHODS.fetch, {
       externalId,

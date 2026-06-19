@@ -117,6 +117,20 @@ jobs:
         working-directory: packages/extension-sdk
         run: npx tsc --noEmit
 
+      # Typecheck foundational packages (wire-protocol types consumed by runtime,
+      # cli, and 20+ extensions; previously unchecked in CI).
+      - name: TypeScript check - collab-protocol
+        working-directory: packages/collab-protocol
+        run: npx tsc --noEmit
+
+      - name: TypeScript check - collab-adapters
+        working-directory: packages/collab-adapters
+        run: npx tsc --noEmit
+
+      - name: TypeScript check - cli
+        working-directory: packages/cli
+        run: npx tsc --noEmit
+
       # Typecheck extensions
       - name: TypeScript check - extensions/pdf-viewer
         working-directory: packages/extensions/pdf-viewer

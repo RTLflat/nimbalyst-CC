@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { VList, type VListHandle } from 'virtua';
 import { useFloating, offset, flip, shift, FloatingPortal } from '@floating-ui/react';
 import { useAtomValue } from 'jotai';
 import type {
@@ -16,7 +17,8 @@ import {
   LEGACY_KEY_TO_TYPE,
   buildFullDocumentTrackerId,
 } from '../documentHeader/frontmatterUtils';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getFieldByRole, resolveRoleFieldName } from '../trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getFieldByRole, resolveRoleFieldName, getPlanStatus } from '../trackerRecordAccessors';
+import { PlanStatusBadge } from './PlanStatusBadge';
 import { globalRegistry, parseDate, normalizeRelationshipValue } from '../models';
 import {usePostHog} from "posthog-js/react";
 import {
@@ -508,7 +510,10 @@ export function renderCell(
         );
       }
       return (
-        <div className="title-text text-[13px] font-medium text-[var(--nim-text)] truncate min-w-0">{title}</div>
+        <div className="title-text flex items-baseline gap-2 min-w-0">
+          <span className="text-[13px] font-medium text-[var(--nim-text)] truncate min-w-0">{title}</span>
+          <PlanStatusBadge status={getPlanStatus(item)} />
+        </div>
       );
 
     case 'key':
@@ -859,8 +864,7 @@ export function TrackerTable({
     return sorted;
   }, []);
 
-  const filteredItems = items
-    .filter(item => {
+  const filteredItems = useMemo(() => items.filter(item => {
       // Apply search filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -903,10 +907,13 @@ export function TrackerTable({
       }
 
       return true;
-    });
+    }), [items, searchTerm, activeTypeFilter, statusFilter, priorityFilter, customFieldFilters]);
 
   // console.log('[TrackerTable] Render - items:', items.length, 'filtered:', filteredItems.length, 'typeFilter:', typeFilter);
-  const sortedItems = sortItems(filteredItems, currentSortBy, currentSortDirection);
+  const sortedItems = useMemo(
+    () => sortItems(filteredItems, currentSortBy, currentSortDirection),
+    [sortItems, filteredItems, currentSortBy, currentSortDirection],
+  );
 
   // Row interaction model -- shared with TrackerTableGrid via useTrackerRows.
   const rows = useTrackerRows({
@@ -941,6 +948,16 @@ export function TrackerTable({
     handleBulkStatusUpdate,
     handleBulkPriorityUpdate,
   } = rows;
+
+  // Windowing: the focused row may be unmounted, so keyboard nav can no longer
+  // rely on the row always being in the DOM. Scroll it into view via the VList
+  // handle (replaces useTrackerRows' querySelectorAll/scrollIntoView, which now
+  // no-ops on unmounted rows).
+  const vlistRef = useRef<VListHandle>(null);
+  useEffect(() => {
+    if (focusedIndex < 0) return;
+    vlistRef.current?.scrollToIndex(focusedIndex, { align: 'nearest' });
+  }, [focusedIndex]);
 
   const handleColumnClick = (column: SortColumn) => {
     const newDirection = currentSortBy === column && currentSortDirection === 'desc' ? 'asc' : 'desc';
@@ -1206,7 +1223,7 @@ export function TrackerTable({
       )}
 
       {/* List */}
-      <div ref={tableRef} tabIndex={0} className="tracker-table-container tracker-table flex-1 overflow-auto pb-1 outline-none">
+      <div ref={tableRef} tabIndex={0} className="tracker-table-container tracker-table flex-1 overflow-hidden pb-1 outline-none">
         {sortedItems.length === 0 ? (
           <div>
             {loading ? (
@@ -1257,7 +1274,8 @@ export function TrackerTable({
             )}
           </div>
         ) : (
-          sortedItems.map((item, index) => {
+          <VList ref={vlistRef} className="tracker-table-vlist !h-full" style={{ overflowX: 'hidden' }}>
+          {sortedItems.map((item, index) => {
             const title = getRecordTitle(item);
             const status = getRecordStatus(item);
             const priority = getRecordPriority(item);
@@ -1312,6 +1330,7 @@ export function TrackerTable({
                         <span className="shrink-0 text-[10px] font-mono font-medium uppercase tracking-[0.08em] text-[var(--nim-text-faint)]">{item.issueKey}</span>
                       )}
                       <span className="text-[13px] font-medium text-[var(--nim-text)] truncate">{title}</span>
+                      <PlanStatusBadge status={getPlanStatus(item)} />
                     </div>
                   )}
                 </div>
@@ -1329,7 +1348,8 @@ export function TrackerTable({
                 </div>
               </div>
             );
-          })
+          })}
+          </VList>
         )}
       </div>
 

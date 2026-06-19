@@ -222,7 +222,7 @@
     "lodash-es": "^4.18.1",
     "mermaid": "^11.12.0",
     "monaco-editor": "^0.55.1",
-    "openai": "^4.104.0",
+    "openai": "^6.9.1",
     "posthog-js": "^1.280.1",
     "prettier": "^2.8.8",
     "react-error-boundary": "^3.1.4",
@@ -231,6 +231,7 @@
     "remark-gfm": "^4.0.1",
     "shell-quote": "^1.8.3",
     "vite": "^7.1.12",
+    "virtua": "^0.48.2",
     "y-websocket": "^1.5.4",
     "yaml": "^2.8.2",
     "yjs": ">=13.5.42"

@@ -50,3 +50,18 @@ tracker_create({
 ```
 
 **As the fix progresses**, update the description with root cause and fix details using `tracker_update`. This creates a durable record of what was wrong and how it was fixed.
+
+## Planning a Tracker Item
+
+The "Plan this item" action (available from an item's detail panel or Kanban card menu) opens an interactive planning session in the current workspace. The session investigates the codebase, brainstorms the approach, and asks you questions to refine the scope before drafting a full implementation plan.
+
+Lifecycle:
+- The item moves to **Planning** status when the session starts.
+- The agent explores the code, asks clarifying questions, and writes the plan to `nimbalyst-local/plans/<KEY>-plan.md` (e.g., `TASK-42-plan.md`).
+- When the plan is ready and saved, the item moves to **Ready** and the planning session is archived.
+- The item's description is rewritten as a short summary with a link to the plan file.
+- Dispatching the item to a worktree (via "Proceed" or the worktree menu) moves it to **In Progress** and gives the agent the saved plan as its starting context.
+
+## Importing Tracker Items from Google Sheets
+
+To set up a form for teammates to submit bugs and tasks directly into your workspace's tracker, deploy the provided Apps Script from `tools/google-apps-script/` (see its README for deployment steps). Paste the deployed web app `/exec` URL into **Tracker** > **Connect Google Sheet**, then share that same URL with teammates as the submission form. When you click **Import**, new rows are pulled into trackers with auto-generated keys (e.g., `BUG-001`). Re-importing is safe — already-imported rows are skipped and not duplicated.

@@ -4,9 +4,11 @@ import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import type { TrackerItemType } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import { globalRegistry, getRoleField } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getFieldByRole, buildKanbanStatusColumns } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordSortOrder, getFieldByRole, typeSupportsPlanning, buildKanbanStatusColumns } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { LivePlanBadge } from './LivePlanBadge';
 import { generateKeyBetween } from '@nimbalyst/runtime/utils/fractionalIndex';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
+import { useDialog } from '../../contexts/DialogContext';
 
 // ── Module-level drag-and-drop handler ──────────────────────────────────
 // Registered once on `document`, survives HMR. The component sets the
@@ -79,6 +81,12 @@ interface KanbanBoardProps {
    *  exactly one item is selected. Callers omit this when the workspace
    *  has no team configured. */
   onCopyDeepLink?: (itemId: string) => void;
+  /** Dispatch the item into a new isolated git worktree (opens the base-branch
+   *  picker). Only shown when exactly one item is selected; callers omit this
+   *  when worktrees are unavailable (not a git repo / feature off). */
+  onRequestWorktreeLaunch?: (itemId: string) => void;
+  /** Launch a read-only PLANNING-mode AI session for the selected item. */
+  onPlanItem?: (itemId: string) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -117,7 +125,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onArchiveItems,
   onDeleteItems,
   onCopyDeepLink,
+  onRequestWorktreeLaunch,
+  onPlanItem,
 }) => {
+  // In-app confirm (DialogContext) — avoids native window.confirm, which leaves
+  // renderer keyboard focus stuck afterward in Electron.
+  const { confirm } = useDialog();
   // Items always come from the caller (TrackerMainView passes atom-sourced items).
   // KanbanBoard no longer loads its own data -- single source of truth via Jotai atoms.
   const allItems = useMemo(() => {
@@ -680,6 +693,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             {p}
                           </span>
                         ) : null; })()}
+                        {/* Plan status */}
+                        <LivePlanBadge item={item} />
                         {/* Owner avatar */}
                         {(() => {
                           const owner = getFieldByRole(item, 'assignee') as string | undefined;
@@ -756,6 +771,39 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
           <div className="border-b border-nim my-1" />
 
+          {onRequestWorktreeLaunch && selectedIds.size === 1 && (
+            <button
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
+              onClick={() => {
+                const [onlyId] = selectedIds;
+                closeContextMenu();
+                onRequestWorktreeLaunch(onlyId);
+              }}
+            >
+              <MaterialSymbol icon="account_tree" size={16} />
+              Launch in Worktree
+            </button>
+          )}
+
+          {onPlanItem && selectedIds.size === 1 && (() => {
+            const [onlyId] = selectedIds;
+            const selectedItem = allItemsRef.current.find(i => i.id === onlyId);
+            if (!selectedItem || !typeSupportsPlanning(selectedItem.primaryType)) return null;
+            return (
+              <button
+                data-testid="tracker-kanban-plan-item"
+                className="tracker-kanban-plan-item-btn w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
+                onClick={() => {
+                  closeContextMenu();
+                  onPlanItem(onlyId);
+                }}
+              >
+                <MaterialSymbol icon="assignment" size={16} />
+                Plan this item
+              </button>
+            );
+          })()}
+
           {onCopyDeepLink && selectedIds.size === 1 && (
             <button
               className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
@@ -787,10 +835,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           {onDeleteItems && (
             <button
               className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[#ef4444] hover:bg-nim-tertiary cursor-pointer"
-              onClick={() => {
+              onClick={async () => {
                 closeContextMenu();
                 const ids = Array.from(selectedIds);
-                if (window.confirm(`Delete ${ids.length} item${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) {
+                const ok = await confirm({
+                  title: ids.length > 1 ? 'Delete items' : 'Delete item',
+                  message: `Delete ${ids.length} item${ids.length > 1 ? 's' : ''}? This cannot be undone.`,
+                  confirmLabel: 'Delete',
+                  destructive: true,
+                });
+                if (ok) {
                   onDeleteItems(ids);
                   setSelectedIds(new Set());
                 }

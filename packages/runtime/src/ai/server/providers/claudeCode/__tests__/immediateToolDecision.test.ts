@@ -27,6 +27,15 @@ function createParams(overrides?: Partial<Parameters<typeof resolveImmediateTool
   };
 }
 
+function createTrackerPlanParams(overrides?: Partial<Parameters<typeof resolveImmediateToolDecision>[1]>) {
+  return createParams({
+    isTrackerPlan: true,
+    workspacePath: '/ws',
+    pathForTrust: '/ws',
+    ...overrides,
+  });
+}
+
 function assertZodCompliantAllow(result: ToolDecision | null) {
   expect(result).not.toBeNull();
   expect(result!.behavior).toBe('allow');
@@ -211,6 +220,161 @@ describe('resolveImmediateToolDecision', () => {
       expect(INTERNAL_MCP_TOOLS).toContain('mcp__nimbalyst-session-naming__update_session_meta');
       expect(INTERNAL_MCP_TOOLS).toContain('mcp__nimbalyst-mcp__display_to_user');
       expect(INTERNAL_MCP_TOOLS).toContain('mcp__nimbalyst-mcp__capture_editor_screenshot');
+    });
+  });
+
+  describe('tracker-plan write-scope branch', () => {
+    it('allows Write under <workspace>/nimbalyst-local/', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Write',
+        input: { file_path: '/ws/nimbalyst-local/plans/x.md', content: 'hi' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+      expect(result!.updatedInput).toEqual(params.input);
+    });
+
+    it('allows Write to a relative path that resolves under nimbalyst-local/', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Write',
+        input: { file_path: 'nimbalyst-local/plans/x.md', content: 'hi' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('denies Write to a source file outside nimbalyst-local/', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Write',
+        input: { file_path: '/ws/src/foo.ts', content: 'malicious' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantDeny(result);
+    });
+
+    it('denies Edit that escapes nimbalyst-local/ via ..', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Edit',
+        input: { file_path: '/ws/nimbalyst-local/../src/foo.ts' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantDeny(result);
+    });
+
+    it('denies a sibling dir that shares the nimbalyst-local prefix', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Write',
+        input: { file_path: '/ws/nimbalyst-local-evil/x.md', content: 'hi' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantDeny(result);
+    });
+
+    it('allows MultiEdit under nimbalyst-local/ (file_path key)', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'MultiEdit',
+        input: { file_path: '/ws/nimbalyst-local/notes.md', edits: [] },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('allows NotebookEdit under nimbalyst-local/ (notebook_path key)', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'NotebookEdit',
+        input: { notebook_path: '/ws/nimbalyst-local/nb.ipynb' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('allows Read of any path', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Read',
+        input: { file_path: '/ws/src/secret.ts' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('allows Grep / Glob / LS of any path', async () => {
+      const deps = createDeps();
+      for (const toolName of ['Grep', 'Glob', 'LS']) {
+        const params = createTrackerPlanParams({ toolName, input: { pattern: 'x' } });
+        const result = await resolveImmediateToolDecision(deps, params);
+        assertZodCompliantAllow(result);
+      }
+    });
+
+    it('denies Bash that commits to git', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Bash',
+        input: { command: 'git commit -m x' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantDeny(result);
+    });
+
+    it('lets non-git Bash fall through to existing handling (returns null in ask mode)', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({
+        toolName: 'Bash',
+        input: { command: 'npm test' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      expect(result).toBeNull();
+    });
+
+    it('still auto-allows internal MCP tools (e.g. tracker_plan_save)', async () => {
+      const deps = createDeps({
+        internalMcpTools: ['mcp__nimbalyst-mcp__tracker_plan_save'],
+      });
+      const params = createTrackerPlanParams({
+        toolName: 'mcp__nimbalyst-mcp__tracker_plan_save',
+        input: { foo: 'bar' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('still delegates AskUserQuestion to its handler', async () => {
+      const mockResult: ToolDecision = { behavior: 'allow', updatedInput: {} };
+      const deps = createDeps({ handleAskUserQuestion: vi.fn().mockResolvedValue(mockResult) });
+      const params = createTrackerPlanParams({
+        toolName: 'AskUserQuestion',
+        input: { questions: [] },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      expect(deps.handleAskUserQuestion).toHaveBeenCalled();
+      expect(result).toEqual(mockResult);
+    });
+
+    it('still allows Skill', async () => {
+      const deps = createDeps();
+      const params = createTrackerPlanParams({ toolName: 'Skill', input: { skill: 'brainstorming' } });
+      const result = await resolveImmediateToolDecision(deps, params);
+      assertZodCompliantAllow(result);
+    });
+
+    it('is inert for a non-tracker-plan session (Write to source falls through to existing logic)', async () => {
+      const deps = createDeps();
+      // isTrackerPlan defaults to undefined/false; in ask mode an unrecognized
+      // Write should fall through to the permission system (null).
+      const params = createParams({
+        toolName: 'Write',
+        input: { file_path: '/test/workspace/src/foo.ts', content: 'x' },
+      });
+      const result = await resolveImmediateToolDecision(deps, params);
+      expect(result).toBeNull();
     });
   });
 

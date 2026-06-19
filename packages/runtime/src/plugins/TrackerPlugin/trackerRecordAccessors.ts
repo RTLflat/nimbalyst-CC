@@ -104,6 +104,15 @@ export function getRecordSortOrder(record: TrackerRecord): string | undefined {
 }
 
 /**
+ * Get the plan status of a record, if any.
+ * Stored as a plain data field `plan = { status, path, summary, ... }`.
+ */
+export function getPlanStatus(record: TrackerRecord): 'planning' | 'planned' | undefined {
+  const plan = record.fields.plan as { status?: 'planning' | 'planned' } | undefined;
+  return plan?.status;
+}
+
+/**
  * Get the FieldDefinition for the field that fulfills a role in a record's type.
  * Falls back to conventional field names when no role is declared.
  */
@@ -128,6 +137,14 @@ export function getStatusOptions(type: string): Array<{ value: string; label: st
 export function getPriorityOptions(type: string): Array<{ value: string; label: string; icon?: string; color?: string }> {
   const fieldDef = getFieldDefForRole(type, 'priority');
   return fieldDef?.options ?? [];
+}
+
+/**
+ * Whether the given tracker type supports planning (i.e., has a 'planning' status option).
+ * Used to gate the "Plan this item" action to applicable types only.
+ */
+export function typeSupportsPlanning(type: string): boolean {
+  return getStatusOptions(type).some(o => o.value === 'planning');
 }
 
 // ---------------------------------------------------------------------------

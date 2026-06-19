@@ -220,7 +220,7 @@ export class OpenAIProvider extends BaseAIProvider {
     try {
       // Use the centralized tool system
       const tools: OpenAI.Chat.ChatCompletionTool[] = this.getToolsInOpenAIFormat();
-      console.log(`[OpenAIProvider] Available tools for OpenAI:`, tools.map(t => t.function?.name || 'unknown'));
+      console.log(`[OpenAIProvider] Available tools for OpenAI:`, tools.map(t => ('function' in t ? t.function?.name : undefined) || 'unknown'));
       if (tools.length === 0) {
         console.warn('[OpenAIProvider] WARNING: No tools available! Check tool registration.');
       }

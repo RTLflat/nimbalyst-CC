@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 <!-- New features go here -->
+- Import tracker items from a Google Sheet, with a shareable web form for teammates to submit bugs and tasks.
 - iOS: create a Meta Agent from the session create menu (alpha-gated to mirror the desktop `meta-agent` feature flag, synced to mobile).
 - New Gemini (Antigravity) marketplace extension, usable as an AI chat and meta-agent provider, with a usage indicator chip. (#558)
 - `/session-cleanup` command (Planning extension) tidies your Sessions board: it proposes phase corrections and "mark complete" candidates for your approval, and flags old sessions to archive.
 - `nim`, a companion CLI for trackers: list, create, update, comment on, archive, and import tracker items from the terminal — through a running Nimbalyst, or directly against the database when the app is closed.
+- Dispatch a tracker item (bug, task, or feature) into a new isolated git worktree — from its detail panel or the Kanban card menu — which auto-starts an agent on the item's description.
+- "Plan this item": starts an interactive planning session that investigates the codebase, asks you questions, and drafts a full implementation plan you shape and approve — saving it to `nimbalyst-local/plans/`, rewriting the item description as a summary, moving the item through Planning → Ready, and letting you dispatch it to a worktree for implementation. The Kanban card and detail panel show a live "Planning…" badge while the session is active and "Waiting for input" when it awaits your response.
 - Link tracker items to one another with relationship fields: typeahead pills in the table and detail panel, plus automatic "Linked from" backlinks.
 - New tracker views — a tag board, saved views (filter and group), and kanban columns that follow each type's custom status order.
 - Customize or reset a tracker type's schema from Settings, with a drift warning when the saved schema diverges from its files.
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Contextual tips now fill empty AI sessions immediately and on every empty session, instead of after a delay and only once per app launch.
+- The tracker table stays responsive with large item lists by rendering only the visible rows.
 
 ### Fixed
 - Personal docs sync no longer overwrites newer local edits (or an open editor's unsaved changes) with an older synced copy.
@@ -34,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Personal and settings sync no longer gets stuck when a stale stored account id blocked the personal sync connection.
 - Tracker table columns for custom fields (such as PR links, author, and number in the GitHub PRs tracker) no longer render blank.
 - Tracker types shared via team sync now persist across restarts (including synced overrides of built-in types), and synced tracker items no longer silently fail to save on some databases.
+
+### Security
+- Updated bundled dependencies to clear several known security advisories.
 
 ### Removed
 <!-- Removed features go here -->

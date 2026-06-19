@@ -9,6 +9,7 @@
  */
 
 import { app } from 'electron';
+import Store from 'electron-store';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
@@ -416,8 +417,7 @@ export class ProjectMigrationService {
   private async migrateWorkspaceSettings(oldPath: string, newPath: string): Promise<void> {
     // Get the electron-store for workspace settings
     // We need to access it directly since the exported functions don't expose key migration
-    const ElectronStore = require('electron-store');
-    const workspaceStore = new ElectronStore({
+    const workspaceStore = new Store<Record<string, any>>({
       name: 'workspace-settings',
       cwd: app.getPath('userData'),
     });

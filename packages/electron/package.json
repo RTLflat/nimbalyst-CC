@@ -65,7 +65,7 @@
     "@nimbalyst/mockuplm": "*",
     "@nimbalyst/runtime": "*",
     "@openai/codex-sdk": "^0.136.0",
-    "@stytch/vanilla-js": "^5.42.0",
+    "@stytch/vanilla-js": "^6.0.9",
     "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
     "@types/marked": "^5.0.2",
@@ -80,7 +80,7 @@
     "chokidar": "^4.0.3",
     "diff": "^5.2.0",
     "electron-log": "^5.4.3",
-    "electron-store": "^8.2.0",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "express-rate-limit": "^7.5.1",
     "extract-zip": "^2.0.1",
@@ -350,6 +350,10 @@
           "**/vite.config.ts",
           "**/src/**"
         ]
+      },
+      {
+        "from": "resources/skills-plugins",
+        "to": "skills-plugins"
       }
     ],
     "afterSign": "build/afterSign.js",

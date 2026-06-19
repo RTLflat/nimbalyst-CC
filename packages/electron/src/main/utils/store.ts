@@ -304,43 +304,10 @@ export interface NavigationHistoryState {
   currentIndex: number;
 }
 
-/**
- * Per-provider override settings for project-level configuration.
- * Values of `undefined` mean "inherit from global settings".
- * Explicit values override the global setting.
- */
-export interface ProviderOverride {
-  /** Override enabled state: true = force enabled, false = force disabled, undefined = inherit */
-  enabled?: boolean;
-  /** Override selected models (if provided, replaces global model selection) */
-  models?: string[];
-  /** Override default model for this provider */
-  defaultModel?: string;
-  /** Project-specific API key (optional, overrides global key) */
-  apiKey?: string;
-}
-
-/**
- * Project-level AI provider overrides.
- * Allows projects to customize AI settings without affecting global configuration.
- *
- * Use cases:
- * - Disable a provider for a specific project
- * - Enable a provider only for certain projects
- * - Use different models per project
- * - Use project-specific API keys (e.g., client-provided keys)
- */
-export interface AIProviderOverrides {
-  /** Override default provider for this project */
-  defaultProvider?: string;
-  /** Override the path to a custom Claude Code executable for this project.
-   * Absent (undefined) means "inherit the global value"; any string set here is
-   * used as-is and overrides the global setting. To remove an existing override,
-   * delete the field rather than setting it to an empty string. */
-  customClaudeCodePath?: string;
-  /** Per-provider overrides */
-  providers?: Record<string, ProviderOverride>;
-}
+// Canonical, cross-process definitions live in src/shared/types/aiSettings.ts.
+// Imported for local use and re-exported so existing `import { ... } from './store'` sites keep working.
+import type { ProviderOverride, AIProviderOverrides } from '../../shared/types/aiSettings';
+export type { ProviderOverride, AIProviderOverrides };
 
 export interface SessionHistoryLayout {
   width: number;
@@ -478,6 +445,14 @@ export interface WorkspaceState {
   // See packages/electron/src/main/extensions/permissionGrantStore.ts for the
   // canonical read/write API.
   extensionPermissionGrants?: PersistedPermissionGrant[];
+  // Google Sheet integration configuration for this workspace.
+  googleSheetIntegration?: {
+    webAppUrl: string;
+    /** base64 safeStorage ciphertext of the access token (preferred). */
+    accessTokenEnc?: string;
+    /** Legacy plaintext token — read-only back-compat; never written by new code. */
+    accessToken?: string;
+  };
   lastUpdated: number;
 }
 

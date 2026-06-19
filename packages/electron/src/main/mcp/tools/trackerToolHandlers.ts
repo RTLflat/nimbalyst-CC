@@ -29,6 +29,7 @@ import { normalizeLegacyLabelValues } from '@nimbalyst/runtime/sync';
 import type { ElectronDocumentService } from '../../services/ElectronDocumentService';
 import { getTrackerImporterRegistry } from '../../services/tracker/TrackerImporterRegistry';
 import { getTrackerImportService } from '../../services/tracker/TrackerImportService';
+import { allocateIssueKey } from '../../services/tracker/issueKeyAllocator';
 import { materializeTrackerTypeDef, removeTrackerTypeDef } from '../../services/tracker/trackerTypeDefStore';
 
 type McpToolResult = {
@@ -1012,6 +1013,25 @@ export const trackerToolSchemas = [
       required: ["urn"],
     },
   },
+  {
+    name: "tracker_plan_save",
+    description:
+      "Save the completed implementation plan for the current tracker-plan session: records the plan file, rewrites the item description, marks it Ready, and ends the planning session.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        planPath: {
+          type: "string",
+          description: "Absolute path to the written plan file",
+        },
+        summary: {
+          type: "string",
+          description: "2-4 sentence summary of the plan",
+        },
+      },
+      required: ["planPath", "summary"],
+    },
+  },
 ];
 
 export async function handleTrackerList(
@@ -1734,24 +1754,23 @@ export async function handleTrackerCreate(
 
     // Allocate a local issue key if sync didn't assign one
     if (createdRow && !createdRow.issue_key) {
-      try {
-        const prefix = workspacePath
-          ? (getWorkspaceState(workspacePath).issueKeyPrefix || 'NIM')
-          : 'NIM';
-        const maxResult = await db.query<{ max_num: number | null }>(
-          `SELECT MAX(issue_number) as max_num FROM tracker_items WHERE workspace = $1`,
-          [workspacePath || '']
-        );
-        const nextNum = (maxResult.rows[0]?.max_num ?? 0) + 1;
-        const issueKey = `${prefix}-${nextNum}`;
-        await db.query(
-          `UPDATE tracker_items SET issue_number = $1, issue_key = $2 WHERE id = $3`,
-          [nextNum, issueKey, id]
-        );
-        createdRow = await resolveTrackerRowByReference(db, id, workspacePath);
-        createdItem = createdRow ? rowToTrackerItem(createdRow) : createdItem;
-      } catch (issueKeyError) {
-        console.error('[MCP Server] Local issue key allocation failed:', issueKeyError);
+      const MAX_ISSUE_KEY_ATTEMPTS = 5;
+      for (let attempt = 1; attempt <= MAX_ISSUE_KEY_ATTEMPTS; attempt++) {
+        try {
+          const { issueNumber, issueKey } = await allocateIssueKey(db, workspacePath || '', args.type);
+          await db.query(
+            `UPDATE tracker_items SET issue_number = $1, issue_key = $2 WHERE id = $3`,
+            [issueNumber, issueKey, id]
+          );
+          createdRow = await resolveTrackerRowByReference(db, id, workspacePath);
+          createdItem = createdRow ? rowToTrackerItem(createdRow) : createdItem;
+          break; // success
+        } catch (issueKeyError) {
+          if (attempt >= MAX_ISSUE_KEY_ATTEMPTS) {
+            console.error('[MCP Server] Local issue key allocation failed after retries:', issueKeyError);
+          }
+          // Otherwise a concurrent create likely took this key; loop and re-allocate.
+        }
       }
     }
 
@@ -1806,6 +1825,7 @@ export async function handleTrackerCreate(
         console.error('[MCP Server] tracker_create body write failed:', bodyError);
       }
     }
+
 
     // Link the current session only when explicitly requested.
     // Why: auto-linking on every create polluted sessions with unrelated tracker

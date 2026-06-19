@@ -173,6 +173,8 @@ const builtinTrackers: TrackerDataModel[] = [
         default: 'to-do',
         options: [
           { value: 'to-do', label: 'To Do', icon: 'circle' },
+          { value: 'planning', label: 'Planning', icon: 'lightbulb', color: '#60a5fa' },
+          { value: 'ready', label: 'Ready', icon: 'rocket_launch', color: '#10b981' },
           { value: 'in-progress', label: 'In Progress', icon: 'motion_photos_on' },
           { value: 'in-review', label: 'In Review', icon: 'rate_review', color: '#3b82f6' },
           { value: 'done', label: 'Done', icon: 'check_circle' },
@@ -219,6 +221,8 @@ const builtinTrackers: TrackerDataModel[] = [
         default: 'to-do',
         options: [
           { value: 'to-do', label: 'To Do', icon: 'circle' },
+          { value: 'planning', label: 'Planning', icon: 'lightbulb', color: '#60a5fa' },
+          { value: 'ready', label: 'Ready', icon: 'rocket_launch', color: '#10b981' },
           { value: 'in-progress', label: 'In Progress', icon: 'motion_photos_on' },
           { value: 'in-review', label: 'In Review', icon: 'rate_review', color: '#3b82f6' },
           { value: 'done', label: 'Done', icon: 'check_circle' },
@@ -297,6 +301,8 @@ const builtinTrackers: TrackerDataModel[] = [
         default: 'to-do',
         options: [
           { value: 'to-do', label: 'To Do', icon: 'circle' },
+          { value: 'planning', label: 'Planning', icon: 'lightbulb', color: '#60a5fa' },
+          { value: 'ready', label: 'Ready', icon: 'rocket_launch', color: '#10b981' },
           { value: 'in-progress', label: 'In Progress', icon: 'motion_photos_on' },
           { value: 'in-review', label: 'In Review', icon: 'rate_review', color: '#3b82f6' },
           { value: 'done', label: 'Done', icon: 'check_circle' },

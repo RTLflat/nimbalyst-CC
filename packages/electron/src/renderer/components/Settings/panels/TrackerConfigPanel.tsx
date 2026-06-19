@@ -10,6 +10,7 @@ import {
 import { trackerItemCountByTypeAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin';
 import { trackerSyncConfigChangeAtom } from '../../../store/atoms/trackerSync';
 import { AlphaBadge, SETTINGS_ALPHA_TOOLTIP } from '../../common/AlphaBadge';
+import { SettingsToggle } from '../../GlobalSettings/SettingsToggle';
 import { useDialog } from '../../../contexts/DialogContext';
 import {
   buildTrackerUpgradeConfirmOptions,

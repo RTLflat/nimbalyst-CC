@@ -4,7 +4,9 @@ import { FloatingPortal } from '@floating-ui/react';
 import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { TrackerIdentity } from '@nimbalyst/runtime';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
-import { getRecordTitle, getRecordPriority, getRecordStatus, getRecordFieldStr, getFieldByRole, isMyRecord } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordPriority, getRecordStatus, getRecordFieldStr, getRecordField, getFieldByRole, isMyRecord } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
+import { buildDispatchPrompt } from './trackerDispatchPrompt';
 import {
   TrackerTable,
   TrackerTableGrid,
@@ -36,23 +38,31 @@ import { setSelectedWorkstreamAtom, sessionRegistryAtom, refreshSessionListAtom,
 import { trackerItemsMapAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
 import { workstreamStateAtom } from '../../store/atoms/workstreamState';
 import { setWindowModeAtom } from '../../store/atoms/windowMode';
-import { defaultAgentModelAtom } from '../../store/atoms/appSettings';
+import { defaultAgentModelAtom, worktreesFeatureAvailableAtom } from '../../store/atoms/appSettings';
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
 import { store } from '../../store';
+import { isGitRepoAtom, createWorktreeWithSessionCoreActionAtom } from '../../store/actions/sessionHistoryActions';
+import { WorktreeBaseBranchPicker } from '../AgenticCoding/WorktreeBaseBranchPicker';
 import { useFloatingMenu } from '../../hooks/useFloatingMenu';
 import { buildTrackerTagOptions, filterTrackerItemsByTags } from './trackerTagFilterUtils';
+import { useDialog } from '../../contexts/DialogContext';
+import { useSheetImport } from './useSheetImport';
+import { buildPlanSeedPrompt } from './planSeedPrompt';
 
 export type ViewMode = 'list' | 'table' | 'kanban' | 'tag-board';
 
 /** Provenance key for a record: the importer provider id, or 'native'. */
 function recordSourceKey(record: TrackerRecord): string {
   const origin = record.system.origin;
-  return origin?.kind === 'external' ? origin.external.providerId : 'native';
+  // Defensive: an external origin missing providerId (e.g. a malformed/legacy
+  // import) must fall back to 'native' rather than returning undefined, which
+  // would crash sourceKeyLabel's .split and take down the whole tracker view.
+  return origin?.kind === 'external' ? (origin.external.providerId || 'native') : 'native';
 }
 
 /** Human label for a source key without probing the importer (avoids backend start). */
 function sourceKeyLabel(key: string): string {
-  if (key === 'native') return 'Native';
+  if (!key || key === 'native') return 'Native';
   // Map known provider ids; otherwise title-case the id.
   const known: Record<string, string> = {
     'github-issues': 'GitHub',
@@ -157,6 +167,30 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const setWindowMode = useSetAtom(setWindowModeAtom);
   const refreshSessionList = useSetAtom(refreshSessionListAtom);
 
+  // Worktree dispatch: gate the "Launch in Worktree" action to git repos with
+  // the worktrees feature enabled, mirroring the SessionHistory New Worktree button.
+  const worktreesAvailable = useAtomValue(worktreesFeatureAvailableAtom);
+  const isGitRepo = useAtomValue(isGitRepoAtom(workspacePath || ''));
+  const canLaunchWorktree = worktreesAvailable && isGitRepo;
+  const dispatchCreateWorktreeSession = useSetAtom(createWorktreeWithSessionCoreActionAtom);
+  // Tracker item awaiting worktree dispatch (drives the base-branch picker modal).
+  const [worktreePickerItemId, setWorktreePickerItemId] = useState<string | null>(null);
+
+  // Populate isGitRepoAtom for this workspace so the worktree action is gated
+  // correctly even when the user opens Tracker mode without first visiting
+  // Agent mode (the other populator). Idempotent — both converge to the same value.
+  useEffect(() => {
+    if (!workspacePath) return;
+    let cancelled = false;
+    window.electronAPI?.invoke('git:is-repo', workspacePath)
+      .then((result: { success?: boolean; isRepo?: boolean }) => {
+        if (cancelled) return;
+        store.set(isGitRepoAtom(workspacePath), Boolean(result?.success && result.isRepo));
+      })
+      .catch(() => { /* leave the default (false) in place */ });
+    return () => { cancelled = true; };
+  }, [workspacePath]);
+
   /** Navigate to Agent mode and activate a linked session */
   const handleSwitchToAgentMode = useCallback((sessionId: string) => {
     // Determine session type for proper workstream selection
@@ -189,6 +223,82 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
     setWindowMode('agent');
   }, [workspacePath, setSelectedWorkstream, setWindowMode]);
 
+  /**
+   * Link a freshly created session to a tracker item and build the context-rich
+   * seed prompt (title, type/status/priority, description, source). Shared by
+   * the plain-session and worktree dispatch paths; the caller decides whether to
+   * pre-fill it as a draft or queue-and-run it.
+   */
+  const linkAndBuildTrackerPrompt = useCallback(async (sessionId: string, trackerItemId: string): Promise<string> => {
+    const itemsMap = store.get(trackerItemsMapAtom);
+    const trackerItem = itemsMap.get(trackerItemId);
+
+    // Prefer the CONTENT body (what the user sees/edits, and where auto-research
+    // writes its findings) over the data.description metadata field.
+    let bodyText = '';
+    try {
+      const res = await window.electronAPI.invoke('document-service:tracker-item-get-content', { itemId: trackerItemId }) as { success?: boolean; content?: any };
+      const raw = res?.content;
+      if (typeof raw === 'string') {
+        try { const v = JSON.parse(raw); bodyText = typeof v === 'string' ? v : ''; } catch { bodyText = raw; }
+      }
+    } catch { /* fall back to data.description below */ }
+
+    // Read the saved plan (stamped by the plan-approval flow in Tasks 4-6).
+    const rawPlan = trackerItem ? getRecordField(trackerItem, 'plan') : undefined;
+    const plan = (rawPlan && typeof (rawPlan as any)?.path === 'string' && (rawPlan as any).path)
+      ? rawPlan as { path: string; summary?: string }
+      : undefined;
+
+    if (trackerItem?.system?.documentPath) {
+      // File-backed item: link via file path (side-effect stays here, not in the pure builder)
+      await window.electronAPI.invoke('tracker:link-session', {
+        trackerId: `file:${trackerItem.system.documentPath}`,
+        sessionId,
+      });
+      const title = getRecordTitle(trackerItem);
+      const status = getRecordStatus(trackerItem);
+      const priority = getRecordPriority(trackerItem);
+      const description = getRecordFieldStr(trackerItem, 'description');
+      const itemId = trackerItem.issueKey || trackerItemId;
+      return buildDispatchPrompt({
+        id: itemId,
+        title,
+        primaryType: trackerItem.primaryType ?? '',
+        status: status || undefined,
+        priority: priority || undefined,
+        description: bodyText.trim() || description,
+        sourcePath: trackerItem.system.documentPath,
+        plan,
+        untrustedContent: trackerItem.system.origin?.kind === 'external',
+      });
+    }
+
+    // Native DB item: link by ID (side-effect stays here)
+    await window.electronAPI.invoke('tracker:link-session', {
+      trackerId: trackerItemId,
+      sessionId,
+    });
+    const title = trackerItem ? getRecordTitle(trackerItem) : trackerItemId;
+    const itemId = trackerItem?.issueKey || trackerItemId;
+    if (!trackerItem) {
+      return buildDispatchPrompt({ id: itemId, title, primaryType: '' });
+    }
+    const status = getRecordStatus(trackerItem);
+    const priority = getRecordPriority(trackerItem);
+    const description = getRecordFieldStr(trackerItem, 'description');
+    return buildDispatchPrompt({
+      id: itemId,
+      title,
+      primaryType: trackerItem.primaryType ?? '',
+      status: status || undefined,
+      priority: priority || undefined,
+      description: bodyText.trim() || description,
+      plan,
+      untrustedContent: trackerItem.system.origin?.kind === 'external',
+    });
+  }, []);
+
   /** Launch a new AI session linked to a tracker item */
   const handleLaunchSession = useCallback(async (trackerItemId: string) => {
     try {
@@ -209,61 +319,9 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
         workspaceId: workspacePath,
       });
       if (result?.success && result?.id) {
-        // Look up the tracker item to build a context-aware draft prompt
-        const itemsMap = store.get(trackerItemsMapAtom);
-        const trackerItem = itemsMap.get(trackerItemId);
-
-        if (trackerItem?.system?.documentPath) {
-          // File-backed item: link via file path and pre-fill draft with item context
-          await window.electronAPI.invoke('tracker:link-session', {
-            trackerId: `file:${trackerItem.system.documentPath}`,
-            sessionId: result.id,
-          });
-          // Build a context-rich prompt with the specific item's details
-          const title = getRecordTitle(trackerItem);
-          const status = getRecordStatus(trackerItem);
-          const priority = getRecordPriority(trackerItem);
-          const description = getRecordFieldStr(trackerItem, 'description');
-          const itemId = trackerItem.issueKey || trackerItemId;
-          const lines: string[] = [];
-          lines.push(`implement tracker item ${itemId}: ${title}`);
-          const meta: string[] = [];
-          if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-          if (status) meta.push(`status: ${status}`);
-          if (priority) meta.push(`priority: ${priority}`);
-          if (meta.length > 0) lines.push(meta.join(', '));
-          if (description) lines.push(`\n${description}`);
-          lines.push(`\nSource: @${trackerItem.system.documentPath}`);
-          lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-          await window.electronAPI.invoke('ai:saveDraftInput', result.id,
-            lines.join('\n'), workspacePath);
-        } else {
-          // Native DB item: link by ID
-          await window.electronAPI.invoke('tracker:link-session', {
-            trackerId: trackerItemId,
-            sessionId: result.id,
-          });
-          // Pre-fill draft with item context
-          const title = trackerItem ? getRecordTitle(trackerItem) : trackerItemId;
-          const itemId = trackerItem?.issueKey || trackerItemId;
-          const lines: string[] = [];
-          lines.push(`implement tracker item ${itemId}: ${title}`);
-          if (trackerItem) {
-            const status = getRecordStatus(trackerItem);
-            const priority = getRecordPriority(trackerItem);
-            const description = getRecordFieldStr(trackerItem, 'description');
-            const meta: string[] = [];
-            if (trackerItem.primaryType) meta.push(`type: ${trackerItem.primaryType}`);
-            if (status) meta.push(`status: ${status}`);
-            if (priority) meta.push(`priority: ${priority}`);
-            if (meta.length > 0) lines.push(meta.join(', '));
-            if (description) lines.push(`\n${description}`);
-          }
-          lines.push(`\nUpdate this tracker item's status when done using tracker_update with id "${itemId}".`);
-          await window.electronAPI.invoke('ai:saveDraftInput', result.id,
-            lines.join('\n'), workspacePath);
-        }
-
+        // Plain session: pre-fill the prompt as a draft (user presses send).
+        const prompt = await linkAndBuildTrackerPrompt(result.id, trackerItemId);
+        await window.electronAPI.invoke('ai:saveDraftInput', result.id, prompt, workspacePath);
         // Refresh session list to pick up the new session, then navigate
         await refreshSessionList();
         setSelectedWorkstream({
@@ -275,7 +333,141 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
     } catch (err) {
       console.error('[TrackerMainView] Failed to launch session:', err);
     }
-  }, [workspacePath, refreshSessionList, setSelectedWorkstream, setWindowMode, defaultModel]);
+  }, [workspacePath, refreshSessionList, setSelectedWorkstream, setWindowMode, defaultModel, linkAndBuildTrackerPrompt]);
+
+  /**
+   * Dispatch a tracker item into a brand-new isolated git worktree: create the
+   * worktree + worktree-backed session, seed it with the item context, then
+   * navigate. Throws on failure so the base-branch picker can surface the
+   * error inline. The draft is seeded before navigation to avoid the user
+   * landing in an unseeded session.
+   */
+  const handleLaunchWorktreeSession = useCallback(
+    async (trackerItemId: string, opts?: { baseBranch?: string; name?: string }) => {
+      const itemsMap = store.get(trackerItemsMapAtom);
+      const trackerItem = itemsMap.get(trackerItemId);
+      const itemLabel = trackerItem
+        ? (trackerItem.issueKey || getRecordTitle(trackerItem) || 'tracker item')
+        : trackerItemId;
+      const res = await dispatchCreateWorktreeSession({
+        baseBranch: opts?.baseBranch,
+        name: opts?.name,
+        title: `Worktree: ${itemLabel}`,
+      });
+      if (!res) throw new Error('Failed to create worktree session');
+      const prompt = await linkAndBuildTrackerPrompt(res.sessionId, trackerItemId);
+      // Auto-start: queue the prompt and trigger processing so the agent begins
+      // immediately in the worktree (mirrors the Blitz queued-prompt path). The
+      // worktree working dir is resolved server-side from the session's worktreeId.
+      await window.electronAPI.invoke('ai:createQueuedPrompt', res.sessionId, prompt);
+      await window.electronAPI.invoke('ai:triggerQueueProcessing', res.sessionId, workspacePath || '');
+      // Advance lifecycle: move the session to 'implementing' and the item to 'in-progress'.
+      // Wrapped separately so a hiccup in either doesn't abort the dispatch+navigate.
+      try {
+        await window.electronAPI.invoke('sessions:update-session-metadata', res.sessionId, { phase: 'implementing' });
+      } catch (err) {
+        console.error('[TrackerMainView] Failed to set session phase to implementing:', err);
+      }
+      if (trackerItem) {
+        try {
+          if (trackerItem.source === 'frontmatter' || trackerItem.source === 'import' || trackerItem.source === 'inline') {
+            await window.electronAPI.documentService.updateTrackerItemInFile({
+              itemId: trackerItem.id,
+              updates: { status: 'in-progress' },
+            });
+          } else {
+            const tracker = globalRegistry.get(trackerItem.primaryType);
+            const syncMode = tracker?.sync?.mode || 'local';
+            await window.electronAPI.documentService.updateTrackerItem({
+              itemId: trackerItem.id,
+              updates: { status: 'in-progress' },
+              syncMode,
+            });
+          }
+        } catch (err) {
+          console.error('[TrackerMainView] Failed to set item status to in-progress:', err);
+        }
+      }
+      setSelectedWorkstream({
+        workspacePath: workspacePath || '',
+        selection: { type: 'worktree', id: res.sessionId },
+      });
+      setWindowMode('agent');
+    },
+    [dispatchCreateWorktreeSession, linkAndBuildTrackerPrompt, setSelectedWorkstream, setWindowMode, workspacePath],
+  );
+
+  /** Open the base-branch picker to dispatch the given item into a new worktree. */
+  const handleRequestWorktreeLaunch = useCallback((trackerItemId: string) => {
+    setWorktreePickerItemId(trackerItemId);
+  }, []);
+
+  /**
+   * Create a tracker-plan session for the given tracker item, queue the
+   * brainstorming seed prompt, and navigate to the agent panel.
+   */
+  const handlePlanItem = useCallback(async (itemId: string) => {
+    try {
+      const itemsMap = store.get(trackerItemsMapAtom);
+      const item = itemsMap.get(itemId);
+      if (!item) {
+        console.error('[TrackerMainView] handlePlanItem: item not found', itemId);
+        return;
+      }
+      const key = item.issueKey || itemId;
+      const planAbsPath = `${workspacePath}/nimbalyst-local/plans/${key}-plan.md`;
+      const sessionId = crypto.randomUUID();
+      const parsedModel = defaultModel ? ModelIdentifier.tryParse(defaultModel) : null;
+      const provider = parsedModel?.provider || 'claude-code';
+      const title = getRecordTitle(item);
+      const priorStatus = getRecordStatus(item);
+
+      // 1. Create the session (metadata.kind marks it as a tracker-plan session)
+      await window.electronAPI.invoke('sessions:create', {
+        session: {
+          id: sessionId,
+          provider,
+          model: defaultModel,
+          title: `Plan: ${title}`,
+          metadata: { kind: 'tracker-plan', trackerItemId: itemId, issueKey: key },
+        },
+        workspaceId: workspacePath,
+      });
+
+      // 2. Link the session to the tracker item
+      await window.electronAPI.invoke('tracker:link-session', { trackerId: itemId, sessionId });
+
+      // 2a. Move item to planning status and stamp data.plan marker
+      await window.electronAPI.invoke('tracker:begin-plan', { itemId, sessionId, workspacePath, priorStatus });
+
+      // 2b. Set the planning session's board phase
+      await window.electronAPI.invoke('sessions:update-session-metadata', sessionId, { phase: 'planning' });
+
+      // 4. Queue the brainstorming seed prompt
+      const prompt = buildPlanSeedPrompt({
+        itemKey: key,
+        type: item.primaryType,
+        title,
+        description: getRecordFieldStr(item, 'description') ?? '',
+        planAbsPath,
+        untrustedContent: item.system.origin?.kind === 'external',
+      });
+      await window.electronAPI.invoke('ai:createQueuedPrompt', sessionId, prompt);
+
+      // 5. Trigger processing (workspacePath as 2nd arg mirrors handleLaunchWorktreeSession)
+      await window.electronAPI.invoke('ai:triggerQueueProcessing', sessionId, workspacePath || '');
+
+      // 6. Refresh and navigate
+      await refreshSessionList();
+      setSelectedWorkstream({
+        workspacePath: workspacePath || '',
+        selection: { type: 'session', id: sessionId },
+      });
+      setWindowMode('agent');
+    } catch (err) {
+      console.error('[TrackerMainView] Failed to plan item:', err);
+    }
+  }, [workspacePath, defaultModel, refreshSessionList, setSelectedWorkstream, setWindowMode]);
 
   // Base item sets from atoms
   const activeItems = useAtomValue(trackerItemsByTypeAtom(filterType));
@@ -459,16 +651,18 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
 
   /** Bulk delete for multi-select context menu */
   const handleDeleteItems = useCallback(async (itemIds: string[]) => {
-    for (const itemId of itemIds) {
-      try {
-        await window.electronAPI.documentService.deleteTrackerItem({ itemId });
-        if (selectedItemId === itemId) {
-          setModeLayout({ selectedItemId: null });
+    await Promise.all(
+      itemIds.map(async (itemId) => {
+        try {
+          await window.electronAPI.documentService.deleteTrackerItem({ itemId });
+          if (selectedItemId === itemId) {
+            setModeLayout({ selectedItemId: null });
+          }
+        } catch (error) {
+          console.error('[TrackerMainView] Failed to delete item:', error);
         }
-      } catch (error) {
-        console.error('[TrackerMainView] Failed to delete item:', error);
-      }
-    }
+      }),
+    );
   }, [selectedItemId, setModeLayout]);
 
   const teamOrgId = useAtomValue(activeTeamOrgIdAtom);
@@ -493,13 +687,15 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
 
   /** Bulk archive for multi-select context menu */
   const handleArchiveItems = useCallback(async (itemIds: string[], archive: boolean) => {
-    for (const itemId of itemIds) {
-      try {
-        await window.electronAPI.documentService.archiveTrackerItem({ itemId, archive });
-      } catch (error) {
-        console.error('[TrackerMainView] Failed to archive item:', error);
-      }
-    }
+    await Promise.all(
+      itemIds.map(async (itemId) => {
+        try {
+          await window.electronAPI.documentService.archiveTrackerItem({ itemId, archive });
+        } catch (error) {
+          console.error('[TrackerMainView] Failed to archive item:', error);
+        }
+      }),
+    );
   }, []);
 
   const handleNewItem = useCallback((type: string) => {
@@ -553,6 +749,25 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
   const [importMenuOpen, setImportMenuOpen] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sheet import
+  const { open: openDialog } = useDialog();
+  const openConnect = useCallback(
+    () => openDialog('connect-google-sheet', { workspacePath }),
+    [openDialog, workspacePath],
+  );
+  const { runImport, lastResult } = useSheetImport(workspacePath ?? '', openConnect);
+
+  useEffect(() => {
+    if (!lastResult) return;
+    setImportStatus(
+      `Imported ${lastResult.created} item(s)` +
+      (lastResult.skipped ? `, ${lastResult.skipped} skipped` : '') +
+      (lastResult.alreadyImported ? `, ${lastResult.alreadyImported} already imported` : ''),
+    );
+    const t = setTimeout(() => setImportStatus(null), 4000);
+    return () => clearTimeout(t);
+  }, [lastResult]);
 
   // External-source importers (GitHub, ...) discovered from installed extensions.
   const [externalImporters, setExternalImporters] = useState<
@@ -872,6 +1087,15 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
                   Import from {imp.displayName}
                 </button>
               ))}
+              <div className="my-1 border-t border-nim" />
+              <button
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-nim-muted hover:bg-nim-tertiary hover:text-nim text-left"
+                data-testid="tracker-import-google-sheet"
+                onClick={() => { setImportMenuOpen(false); void runImport(); }}
+              >
+                <MaterialSymbol icon="table_view" size={14} />
+                From Google Sheet
+              </button>
             </div>
           )}
         </div>
@@ -967,6 +1191,8 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onArchiveItems={handleArchiveItems}
               onDeleteItems={handleDeleteItems}
               onCopyDeepLink={teamOrgId ? handleCopyDeepLink : undefined}
+              onRequestWorktreeLaunch={canLaunchWorktree ? handleRequestWorktreeLaunch : undefined}
+              onPlanItem={handlePlanItem}
             />
           )}
 
@@ -994,12 +1220,28 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
               onSwitchToFilesMode={onSwitchToFilesMode}
               onSwitchToAgentMode={handleSwitchToAgentMode}
               onLaunchSession={handleLaunchSession}
+              onLaunchWorktreeSession={handleRequestWorktreeLaunch}
+              canLaunchWorktree={canLaunchWorktree}
+              onPlanItem={handlePlanItem}
               onArchive={handleArchiveItem}
               onDelete={handleDeleteItem}
             />
           </DetailPanelResizable>
         )}
       </div>
+
+      {/* Base-branch picker for dispatching a tracker item into a new worktree */}
+      <WorktreeBaseBranchPicker
+        isOpen={!!worktreePickerItemId}
+        workspacePath={workspacePath || ''}
+        onCreate={async (opts) => {
+          if (worktreePickerItemId) {
+            await handleLaunchWorktreeSession(worktreePickerItemId, opts);
+          }
+          setWorktreePickerItemId(null);
+        }}
+        onCancel={() => setWorktreePickerItemId(null)}
+      />
 
       {/* External-source import picker */}
       {sourceDialog && workspacePath && (

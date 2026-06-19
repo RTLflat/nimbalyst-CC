@@ -53,6 +53,28 @@ vi.mock('electron', () => ({
   }
 }));
 
+// electron-store@11 (via conf@15) dropped the package.json `projectName`
+// fallback: `new Store({ name })` throws "Please specify the `projectName`
+// option" whenever Electron's `app` is unresolvable. Under vitest that is
+// always -- the `vi.mock('electron')` above does not reach electron-store's own
+// `import electron from 'electron'` (node_modules is not transformed), so its
+// `defaultCwd` stays undefined. The real main process is unaffected (it sets
+// cwd = app.getPath('userData'), so conf never consults projectName). Inject the
+// same name electron-store@8 fell back to ('electron-store') so the no-app config
+// dir matches what tests expect: envPaths('electron-store', { suffix: 'nodejs' }).
+// A per-file vi.mock('electron-store') still overrides this (e.g. CommitTrackerLinker).
+vi.mock('electron-store', async () => {
+  const actual = await vi.importActual<any>('electron-store');
+  const RealStore = actual.default;
+  return {
+    default: class extends RealStore {
+      constructor(options: Record<string, unknown> = {}) {
+        super({ projectName: 'electron-store', ...options });
+      }
+    },
+  };
+});
+
 // Set test timeout
 beforeAll(() => {
   vi.setConfig({ testTimeout: 10000 });
