@@ -101,4 +101,49 @@ describe('importFromSheet', () => {
     expect(result.created).toBe(1);
     expect(result.skipped).toBe(1);
   });
+
+  // Cross-workspace collision: two LOCAL workspaces connecting the SAME Google
+  // Sheet. Sheet-import ids are deterministic and GLOBAL (deterministicTrackerId
+  // hashes `google-sheets:<webAppUrl>:<rowId>`, no workspace) and the pre-import
+  // existence check (findExistingTrackerIds) queries tracker_items by id with no
+  // workspace filter. So once workspace A imports a row, workspace B's existence
+  // check sees that global id and silently counts the row as `alreadyImported` —
+  // workspace B can never import the sheet.
+  //
+  // This is NOT a simple workspace-scoping bug to fix here: bug/task/decision/
+  // feature default to sync.mode='shared' and plan to 'hybrid', so the global id
+  // is load-bearing — two teammates' machines importing the same upstream row
+  // must converge on one row at the server's ON CONFLICT (id) layer. Because
+  // sheet-imported items CAN be shared, the correct fix (workspace-scoped URN
+  // dedup + sync-policy-aware id derivation) belongs in the importer-registry
+  // unification, plan 014. Skipped until then; see plans/006.
+  it.skip('cross-workspace collision — resolved by plan 014', async () => {
+    (client.fetchRows as any).mockResolvedValue([
+      { rowId: 'r1', type: 'bug', title: 'Crash', commandFeature: '', description: '' },
+    ]);
+
+    // Model the GLOBAL tracker_items table: keyed by id only, NOT by workspace.
+    const globalIds = new Set<string>();
+    (exists.findExistingTrackerIds as any).mockImplementation(
+      async (ids: string[]) => new Set(ids.filter((id) => globalIds.has(id))),
+    );
+    (handlers.handleTrackerCreate as any).mockImplementation(async (args: any) => {
+      globalIds.add(args.id);
+      return { content: [], isError: false };
+    });
+
+    // Workspace A imports first and owns the row's global id.
+    const a = await importFromSheet('/workspace-a');
+    expect(a.created).toBe(1);
+    expect(a.alreadyImported).toBe(0);
+
+    // Workspace B imports the SAME sheet. It has never imported this row, but the
+    // global existence check sees workspace A's id.
+    const b = await importFromSheet('/workspace-b');
+    // BUG (today): workspace B is silently swallowed as alreadyImported, created 0.
+    expect(b.created).toBe(0);
+    expect(b.alreadyImported).toBe(1);
+    // Desired post-fix (plan 014): workspace B creates its own workspace-scoped
+    // row or surfaces a clear, non-silent outcome — i.e. b.created === 1.
+  });
 });
