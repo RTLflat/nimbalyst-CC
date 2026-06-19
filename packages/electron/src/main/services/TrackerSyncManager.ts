@@ -52,6 +52,11 @@ import { getOrgKey, getOrgKeyFingerprint, fetchAndUnwrapOrgKey } from './OrgKeyS
 import { getCollabSyncWsUrl } from '../utils/collabSyncUrl';
 import { getDatabase } from '../database/initialize';
 import { TrackerPGLiteStore } from './tracker/TrackerPGLiteStore';
+import {
+  getMaxTrackerSchemaSyncId,
+  listUnsyncedTrackerSchemaDefs,
+} from './tracker/trackerTypeDefStore';
+import { applyRemoteWorkspaceTrackerSchemaDef } from './TrackerSchemaService';
 import { windows, windowStates } from '../window/windowState';
 import { getEffectiveTrackerSyncPolicy, shouldSyncTrackerPolicy } from './TrackerPolicyService';
 import { rowToTrackerItem } from '../mcp/tools/trackerToolHandlers';
@@ -281,6 +286,11 @@ async function doInitializeTrackerSync(workspacePath: string): Promise<void> {
     encryptionKey,
     orgKeyFingerprint,
     persistence,
+    schemaSync: {
+      getMaxSyncId: () => getMaxTrackerSchemaSyncId(workspacePath),
+      listUnsynced: () => listUnsyncedTrackerSchemaDefs(workspacePath),
+      applyRemote: (def) => applyRemoteWorkspaceTrackerSchemaDef(workspacePath, def),
+    },
     getJwt: () => getOrgScopedJwt(team.orgId),
     refreshKey: () => refreshKeyForOrg(team.orgId),
     // Node.js 22+ ships a global WebSocket, but Electron's main process
@@ -432,10 +442,15 @@ async function backfillSharedLocalItems(workspacePath: string): Promise<void> {
     return;
   }
 
+  // Candidates: never-synced items (`sync_id IS NULL`) plus items left
+  // `sync_status='pending'` by an offline mutation -- including the `nim` CLI
+  // writing directly to SQLite while the app was closed. Re-pushing an
+  // already-synced item is idempotent: `applyRemoteItem` flips it back to
+  // 'synced' on ack, so it falls out of this set on the next launch.
   const candidates = await db.query(
     `SELECT * FROM tracker_items
      WHERE workspace = $1
-       AND sync_id IS NULL
+       AND (sync_id IS NULL OR sync_status = 'pending')
        AND deleted_at IS NULL
      ORDER BY created ASC`,
     [workspacePath],
@@ -752,6 +767,11 @@ export function registerTrackerSyncHandlers(): void {
           encryptionKey,
           orgKeyFingerprint,
           persistence,
+          schemaSync: {
+            getMaxSyncId: () => getMaxTrackerSchemaSyncId(workspacePath),
+            listUnsynced: () => listUnsyncedTrackerSchemaDefs(workspacePath),
+            applyRemote: (def) => applyRemoteWorkspaceTrackerSchemaDef(workspacePath, def),
+          },
           getJwt: async () => 'test-jwt',
           createWebSocket: ((url: string) => new WebSocket(url)) as unknown as TrackerSyncEngineConfig['createWebSocket'],
           onStatusChange: (status) => {

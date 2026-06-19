@@ -10,12 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 <!-- New features go here -->
+- iOS: create a Meta Agent from the session create menu (alpha-gated to mirror the desktop `meta-agent` feature flag, synced to mobile).
+- New Gemini (Antigravity) marketplace extension, usable as an AI chat and meta-agent provider, with a usage indicator chip. (#558)
+- `/session-cleanup` command (Planning extension) tidies your Sessions board: it proposes phase corrections and "mark complete" candidates for your approval, and flags old sessions to archive.
+- `nim`, a companion CLI for trackers: list, create, update, comment on, archive, and import tracker items from the terminal — through a running Nimbalyst, or directly against the database when the app is closed.
+- Link tracker items to one another with relationship fields: typeahead pills in the table and detail panel, plus automatic "Linked from" backlinks.
+- New tracker views — a tag board, saved views (filter and group), and kanban columns that follow each type's custom status order.
+- Customize or reset a tracker type's schema from Settings, with a drift warning when the saved schema diverges from its files.
+- Edit and delete your own tracker comments.
 
 ### Changed
-<!-- Changes to existing functionality go here -->
+- Contextual tips now fill empty AI sessions immediately and on every empty session, instead of after a delay and only once per app launch.
 
 ### Fixed
+- Personal docs sync no longer overwrites newer local edits (or an open editor's unsaved changes) with an older synced copy.
+- "Commit with AI" in a worktree now proposes all uncommitted changes in the worktree, not just the current session's edits.
+- Claude Code CLI sessions now show an install link when the Claude Code CLI isn't installed, instead of a cryptic terminal error.
 - Stop the AskUserQuestion widget from crashing when a question is missing its options.
+- Deleting a custom tracker type no longer fails on the SQLite backend.
+- Launching a sibling session from a normal session no longer moves it (and the new session) into the Meta Agent group in the session list.
+- Tracker items from one project no longer leak into another project's panel.
+- The tracker detail panel no longer overwrites custom field edits made elsewhere while it's open.
+- Personal and settings sync no longer gets stuck when a stale stored account id blocked the personal sync connection.
+- Tracker table columns for custom fields (such as PR links, author, and number in the GitHub PRs tracker) no longer render blank.
+- Tracker types shared via team sync now persist across restarts (including synced overrides of built-in types), and synced tracker items no longer silently fail to save on some databases.
 
 ### Removed
 <!-- Removed features go here -->

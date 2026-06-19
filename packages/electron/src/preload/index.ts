@@ -504,6 +504,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiSaveDraftInput: (sessionId: string, draftInput: string, workspacePath?: string) =>
     ipcRenderer.invoke('ai:saveDraftInput', sessionId, draftInput, workspacePath),
   aiDeleteSession: (sessionId: string, workspacePath?: string) => ipcRenderer.invoke('ai:deleteSession', sessionId, workspacePath),
+
+  // Flat-key settings (see shared/settings/keys.ts and main/services/SettingsService.ts).
+  // settingsGetAll seeds every atom at startup; settingsSet is the only write path.
+  // settings:changed is broadcast from main on every mutation.
+  settingsGetAll: () => ipcRenderer.invoke('settings:getAll'),
+  settingsSet: (key: string, value: unknown) => ipcRenderer.invoke('settings:set', key, value),
+  settingsDelete: (key: string) => ipcRenderer.invoke('settings:delete', key),
+  onSettingsChanged: (callback: (payload: { key: string; value: unknown }) => void) => {
+    const handler = (_event: any, payload: { key: string; value: unknown }) => callback(payload);
+    ipcRenderer.on('settings:changed', handler);
+    return () => ipcRenderer.removeListener('settings:changed', handler);
+  },
+
   getAISettings: () => ipcRenderer.invoke('ai:getSettings'),
   saveAISettings: (settings: any) => ipcRenderer.invoke('ai:saveSettings', settings),
   testAIConnection: (provider: 'claude' | 'claude-code' | 'openai' | 'lmstudio') => ipcRenderer.invoke('ai:testConnection', provider),
@@ -1363,6 +1376,31 @@ contextBridge.exposeInMainWorld('electronAPI', {
     autoWrapNewMembers: (orgId: string) => ipcRenderer.invoke('team:auto-wrap-new-members', orgId),
   },
 
+  // Epic H1: org / project access model. `canAccess` is the single client-side
+  // permission check; `syncProjection` refreshes the local org/member/grant
+  // projection from the server; project-access grant/revoke/list manage the
+  // per-project member set.
+  org: {
+    canAccess: (input: { orgId?: string | null; projectId?: string | null; action: 'view' | 'edit' | 'admin' }) =>
+      ipcRenderer.invoke('org:can-access', input),
+    syncProjection: () => ipcRenderer.invoke('org:sync-projection'),
+    grantProjectAccess: (orgId: string, projectId: string, userId: string, projectRole: string) =>
+      ipcRenderer.invoke('org:grant-project-access', orgId, projectId, userId, projectRole),
+    revokeProjectAccess: (orgId: string, projectId: string, userId: string) =>
+      ipcRenderer.invoke('org:revoke-project-access', orgId, projectId, userId),
+    listProjectAccess: (orgId: string, projectId: string) =>
+      ipcRenderer.invoke('org:list-project-access', orgId, projectId),
+    // Live write-through from TeamSync DO broadcasts into the local projection.
+    applyProjectAccess: (projectId: string, userId: string, projectRole: string | null) =>
+      ipcRenderer.invoke('org:apply-project-access', projectId, userId, projectRole),
+    applyMemberUpserted: (orgId: string, userId: string, email: string | null, role: string) =>
+      ipcRenderer.invoke('org:apply-member-upserted', orgId, userId, email, role),
+    applyMemberRoleChanged: (orgId: string, userId: string, role: string) =>
+      ipcRenderer.invoke('org:apply-member-role-changed', orgId, userId, role),
+    applyMemberRemoved: (orgId: string, userId: string) =>
+      ipcRenderer.invoke('org:apply-member-removed', orgId, userId),
+  },
+
   // Extensions API
   extensions: {
     listInstalled: () => ipcRenderer.invoke('extensions:list-installed'),
@@ -1625,6 +1663,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       cols?: number;
       rows?: number;
     }) => ipcRenderer.invoke('claude-cli:ensure-session', payload),
+    // Whether the genuine `claude` CLI is installed (NIM-852). The transcript
+    // checks this for a claude-code-cli session to show an install notice and
+    // skip the spawn, rather than producing a cryptic `command not found`.
+    isClaudeCliInstalled: (): Promise<boolean> =>
+      ipcRenderer.invoke('claude-cli:is-installed'),
     // Submit a claude-code-cli prompt (NIM-806) — composes the PTY line (prompt +
     // inline attachment paths), writes it to the terminal, and logs the clean
     // typed prompt (+ attachment chips) as the transcript user row in the main
