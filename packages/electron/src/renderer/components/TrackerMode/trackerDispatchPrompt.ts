@@ -3,6 +3,8 @@
  * Callers resolve all async values (body content, plan) before calling this.
  */
 
+import { fenceExternalContent } from './promptFencing';
+
 export interface DispatchPromptItem {
   id: string;
   title: string;
@@ -15,6 +17,13 @@ export interface DispatchPromptItem {
   plan?: { path: string; summary?: string };
   /** documentPath for file-backed items — produces a `Source: @<path>` line. */
   sourcePath?: string;
+  /**
+   * When true, the description came from an externally-imported item and is
+   * wrapped in a "treat as DATA" fence (defense-in-depth, not a guarantee).
+   * The one-line title is left as-is. When unset/false, output is
+   * byte-identical to before this flag existed.
+   */
+  untrustedContent?: boolean;
 }
 
 export function buildDispatchPrompt(item: DispatchPromptItem): string {
@@ -43,7 +52,13 @@ export function buildDispatchPrompt(item: DispatchPromptItem): string {
   if (meta.length > 0) lines.push(meta.join(', '));
 
   // Body detail
-  if (item.description) lines.push(`\n${item.description}`);
+  if (item.description) {
+    lines.push(
+      item.untrustedContent
+        ? fenceExternalContent('description', item.description)
+        : `\n${item.description}`
+    );
+  }
 
   // File-backed source line
   if (item.sourcePath) lines.push(`\nSource: @${item.sourcePath}`);

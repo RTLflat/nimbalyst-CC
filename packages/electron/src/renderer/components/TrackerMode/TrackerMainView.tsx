@@ -269,6 +269,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
         description: bodyText.trim() || description,
         sourcePath: trackerItem.system.documentPath,
         plan,
+        untrustedContent: trackerItem.system.origin?.kind === 'external',
       });
     }
 
@@ -293,6 +294,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
       priority: priority || undefined,
       description: bodyText.trim() || description,
       plan,
+      untrustedContent: trackerItem.system.origin?.kind === 'external',
     });
   }, []);
 
@@ -447,6 +449,7 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
         title,
         description: getRecordFieldStr(item, 'description') ?? '',
         planAbsPath,
+        untrustedContent: item.system.origin?.kind === 'external',
       });
       await window.electronAPI.invoke('ai:createQueuedPrompt', sessionId, prompt);
 

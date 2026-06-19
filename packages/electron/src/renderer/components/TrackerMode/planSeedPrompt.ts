@@ -3,12 +3,20 @@
  * Instructs an agent to investigate, brainstorm, plan, and save.
  */
 
+import { fenceExternalContent } from './promptFencing';
+
 export interface PlanSeedPromptArgs {
   itemKey: string;
   type: string;
   title: string;
   description: string;
   planAbsPath: string;
+  /**
+   * When true, the description came from an externally-imported item and is
+   * wrapped in a "treat as DATA" fence (defense-in-depth, not a guarantee).
+   * When unset/false, output is byte-identical to before this flag existed.
+   */
+  untrustedContent?: boolean;
 }
 
 export function buildPlanSeedPrompt(args: PlanSeedPromptArgs): string {
@@ -18,7 +26,7 @@ export function buildPlanSeedPrompt(args: PlanSeedPromptArgs): string {
 
   // Header with title and description
   parts.push(`Plan: ${args.title}`);
-  parts.push(`\n${desc}`);
+  parts.push(args.untrustedContent ? fenceExternalContent('description', desc) : `\n${desc}`);
 
   // Read-only investigation instruction
   parts.push(
