@@ -410,7 +410,7 @@ function createSharedMcpServer(
           return handleTrackerGet(args, workspacePath);
 
         case "tracker_list_types":
-          return handleTrackerListTypes(args);
+          return handleTrackerListTypes(args, workspacePath);
 
         case "tracker_define_type":
           return handleTrackerDefineType(args, workspacePath);

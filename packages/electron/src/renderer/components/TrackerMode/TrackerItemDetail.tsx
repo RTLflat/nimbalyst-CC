@@ -16,17 +16,20 @@ import { $getRoot } from 'lexical';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import type { FieldDefinition } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/TrackerDataModel';
-import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField, typeSupportsPlanning } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
+import { getRecordTitle, getRecordStatus, getRecordPriority, getRecordField, typeSupportsPlanning, isSameIdentity } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
 import { LivePlanBadge } from './LivePlanBadge';
+import type { TrackerIdentity } from '@nimbalyst/runtime';
 import { TrackerFieldEditor, type TeamMemberOption } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/TrackerFieldEditor';
 import { UserAvatar } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/UserAvatar';
-import { trackerItemByIdAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
+import { trackerItemByIdAtom, trackerItemsMapAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
+import { resolveRelationshipType } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import { refreshSessionListAtom, sessionRegistryAtom, type SessionMeta } from '../../store/atoms/sessions';
 import { buildTrackerDeepLink } from '../../store/atoms/collabDocuments';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
 import { useDialog } from '../../contexts/DialogContext';
 import { getRelativeTimeString } from '../../utils/dateFormatting';
 import { useTrackerContentCollab } from '../../hooks/useTrackerContentCollab';
+import { reconcileExternalFieldChanges } from './trackerDetailFieldSync';
 
 interface TrackerItemDetailProps {
   itemId: string;
@@ -411,7 +414,14 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
   const [localTitle, setLocalTitle] = useState(item ? getRecordTitle(item) : '');
   const [localDescription, setLocalDescription] = useState(item ? (item.fields.description as string ?? '') : '');
   const [localCustomFields, setLocalCustomFields] = useState<Record<string, any>>({});
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Per-field debounce timers (not one shared timer) so editing one field never
+  // drops another field's pending save, and so reconciliation can tell which
+  // fields are mid-edit. `pendingFieldsRef` holds fields with an unflushed save;
+  // `externalFieldBaselineRef` is the last-reconciled snapshot of persisted
+  // values used to detect external writes (NIM-790).
+  const fieldSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pendingFieldsRef = useRef<Set<string>>(new Set());
+  const externalFieldBaselineRef = useRef<Record<string, unknown>>({});
   const editable = item ? isEditable(item) : false;
   const hasRichContent = item ? isNativeItem(item) : false; // Only native items have embedded Lexical content
 
@@ -446,16 +456,42 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
     setLocalTitle(getRecordTitle(item));
     setLocalDescription(item.fields.description as string ?? '');
     setLocalCustomFields({});
-    // Clear any stale debounce timer from the previous item
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
+    // Clear any stale per-field debounce timers from the previous item and seed
+    // the reconciliation baseline with the new item's persisted fields.
+    for (const timer of fieldSaveTimersRef.current.values()) clearTimeout(timer);
+    fieldSaveTimersRef.current.clear();
+    pendingFieldsRef.current.clear();
+    externalFieldBaselineRef.current = { ...item.fields };
     setIsLinkingExistingSession(false);
     setSessionSearchQuery('');
     setLinkingSessionId(null);
     setLinkSessionError(null);
   }, [itemId]); // itemId only -- not item fields
+
+  // Reconcile in-progress field overrides against external writes (MCP, sync,
+  // another window). When a field the user is NOT actively editing changes
+  // underneath us, drop the stale local override so the panel shows -- and
+  // saves -- the fresh value instead of clobbering it (NIM-790).
+  const itemFields = item?.fields;
+  useEffect(() => {
+    if (!itemFields) return;
+    const baseline = externalFieldBaselineRef.current;
+    externalFieldBaselineRef.current = { ...itemFields };
+    setLocalCustomFields((prev) => {
+      const overriddenFields = Object.keys(prev);
+      if (overriddenFields.length === 0) return prev;
+      const { clearedFields } = reconcileExternalFieldChanges({
+        previousPersisted: baseline,
+        currentPersisted: itemFields,
+        overriddenFields,
+        pendingFields: pendingFieldsRef.current,
+      });
+      if (clearedFields.length === 0) return prev;
+      const next = { ...prev };
+      for (const f of clearedFields) delete next[f];
+      return next;
+    });
+  }, [itemFields]);
 
   // Load rich content from PGLite once when navigating to a new item.
   // After initial load, the Lexical editor owns the content and saves via debounced saveContent.
@@ -660,18 +696,33 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
           syncMode,
         });
       }
+      // Refresh the derived relationship index for this item (Epic C Phase 2) so
+      // backlinks stay current after a relationship field edit. Fire-and-forget,
+      // idempotent; harmless for non-relationship field saves.
+      window.electronAPI
+        .invoke('document-service:tracker-item-reindex-relationships', { itemId: item.id })
+        .catch(() => {});
     } catch (err) {
       console.error('[TrackerItemDetail] Failed to save field:', err);
     }
   }, [item?.id, item?.source, editable, syncMode]);
 
-  /** Debounced save for text fields */
-  const debouncedSave = useCallback((updates: Record<string, any>) => {
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      debounceTimerRef.current = null;
-      saveField(updates);
-    }, 500);
+  /** Debounced save for a single text field. Per-field timers + pending-field
+   *  tracking let the reconciliation effect distinguish "user is editing this
+   *  field" from "external write landed" (NIM-790). */
+  const debouncedSaveField = useCallback((fieldName: string, value: any) => {
+    pendingFieldsRef.current.add(fieldName);
+    const timers = fieldSaveTimersRef.current;
+    const existing = timers.get(fieldName);
+    if (existing) clearTimeout(existing);
+    timers.set(fieldName, setTimeout(async () => {
+      timers.delete(fieldName);
+      try {
+        await saveField({ [fieldName]: value });
+      } finally {
+        pendingFieldsRef.current.delete(fieldName);
+      }
+    }, 500));
   }, [saveField]);
 
   /** Debounced save for rich content.
@@ -724,8 +775,10 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
 
   // Cleanup timers
   useEffect(() => {
+    const timers = fieldSaveTimersRef.current;
     return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      for (const timer of timers.values()) clearTimeout(timer);
+      timers.clear();
       if (contentSaveTimerRef.current) clearTimeout(contentSaveTimerRef.current);
     };
   }, []);
@@ -768,8 +821,8 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
     } else {
       setLocalCustomFields(prev => ({ ...prev, [fieldName]: value }));
     }
-    debouncedSave({ [fieldName]: value });
-  }, [debouncedSave]);
+    debouncedSaveField(fieldName, value);
+  }, [debouncedSaveField]);
 
   /** Open the source document in Files mode */
   const handleOpenDocument = useCallback(() => {
@@ -1469,6 +1522,9 @@ export const TrackerItemDetail: React.FC<TrackerItemDetailProps> = ({
           </div>
         )}
 
+        {/* Linked From (incoming relationships, Epic C Phase 2) */}
+        <BacklinksSection itemId={item.id} />
+
         {/* Comments section */}
         {item.source !== 'inline' && item.source !== 'frontmatter' && (
           <div className="space-y-2">
@@ -1624,12 +1680,105 @@ const ReadOnlyField: React.FC<{ field: FieldDefinition; value: any }> = ({ field
   );
 };
 
+/**
+ * "Linked From" — incoming relationships (Epic C Phase 2). Reads the derived
+ * tracker_relationship_index via IPC; resolves each source item's display from
+ * the loaded items map. Hidden when there are no backlinks.
+ */
+interface Backlink { sourceItemId: string; sourceFieldId: string; relationshipTypeKey?: string | null }
+
+const BacklinksSection: React.FC<{ itemId: string }> = ({ itemId }) => {
+  const [backlinks, setBacklinks] = useState<Backlink[]>([]);
+  const itemsMap = useAtomValue(trackerItemsMapAtom);
+
+  useEffect(() => {
+    let cancelled = false;
+    window.electronAPI
+      .invoke('document-service:tracker-item-backlinks', { itemId })
+      .then((res: any) => {
+        if (cancelled) return;
+        setBacklinks(res?.success && Array.isArray(res.backlinks) ? res.backlinks : []);
+      })
+      .catch(() => { if (!cancelled) setBacklinks([]); });
+    return () => { cancelled = true; };
+  }, [itemId]);
+
+  if (backlinks.length === 0) return null;
+
+  return (
+    <div className="space-y-2 tracker-backlinks">
+      <h4 className="text-xs font-medium text-nim-muted uppercase tracking-wide">Linked from</h4>
+      <div className="flex flex-wrap gap-1">
+        {backlinks.map((b) => {
+          const src = itemsMap.get(b.sourceItemId);
+          const label = src?.issueKey || (src?.fields?.title as string | undefined) || b.sourceItemId;
+          const rel = resolveRelationshipType(b.relationshipTypeKey ?? undefined);
+          const relLabel = rel?.displayName ?? b.relationshipTypeKey ?? 'links to';
+          return (
+            <span
+              key={`${b.sourceItemId}:${b.sourceFieldId}`}
+              className="tracker-backlink-pill inline-flex items-center gap-1 rounded-full bg-nim-tertiary px-2 py-0.5 text-[11px] text-nim"
+              title={`${label} — ${relLabel}`}
+            >
+              <span className="text-nim-faint">{relLabel}:</span>
+              {label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /** Inline comments section for tracker items */
 const CommentsSection: React.FC<{ itemId: string; comments?: any[] }> = ({ itemId, comments }) => {
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   // Optimistic comments shown immediately on submit, before the atom round-trips
   const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
+  // Current user identity, used to gate edit/delete to the comment author (NIM-360).
+  const [currentIdentity, setCurrentIdentity] = useState<TrackerIdentity | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    window.electronAPI
+      .invoke('document-service:get-current-identity')
+      .then((result: any) => {
+        if (cancelled) return;
+        if (result?.success && result.identity) setCurrentIdentity(result.identity);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleEditSave = useCallback(async (commentId: string) => {
+    const body = editBody.trim();
+    if (!body) return;
+    setEditingId(null);
+    try {
+      await window.electronAPI.invoke('document-service:tracker-item-update-comment', {
+        itemId,
+        commentId,
+        body,
+      });
+    } catch (err) {
+      console.error('Failed to edit comment:', err);
+    }
+  }, [itemId, editBody]);
+
+  const handleDelete = useCallback(async (commentId: string) => {
+    try {
+      await window.electronAPI.invoke('document-service:tracker-item-update-comment', {
+        itemId,
+        commentId,
+        deleted: true,
+      });
+    } catch (err) {
+      console.error('Failed to delete comment:', err);
+    }
+  }, [itemId]);
 
   // When server-side comments arrive (atom update), clear optimistic entries
   // that are now present in the real data.
@@ -1678,16 +1827,68 @@ const CommentsSection: React.FC<{ itemId: string; comments?: any[] }> = ({ itemI
 
   return (
     <div className="space-y-2">
-      {visibleComments.map((comment: any) => (
-        <div key={comment.id} className={`rounded bg-nim-tertiary p-2 space-y-1${comment._optimistic ? ' opacity-70' : ''}`}>
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="font-medium text-nim-muted">{comment.authorIdentity?.displayName || 'You'}</span>
-            <span className="text-nim-faint">{getRelativeTimeString(comment.createdAt)}</span>
-            {comment.updatedAt && <span className="text-nim-faint">(edited)</span>}
+      {visibleComments.map((comment: any) => {
+        const isAuthor = !comment._optimistic
+          && isSameIdentity(comment.authorIdentity ?? null, currentIdentity);
+        const isEditing = editingId === comment.id;
+        return (
+          <div key={comment.id} className={`tracker-comment group rounded bg-nim-tertiary p-2 space-y-1${comment._optimistic ? ' opacity-70' : ''}`}>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="font-medium text-nim-muted">{comment.authorIdentity?.displayName || 'You'}</span>
+              <span className="text-nim-faint">{getRelativeTimeString(comment.createdAt)}</span>
+              {comment.updatedAt && <span className="text-nim-faint">(edited)</span>}
+              {isAuthor && !isEditing && (
+                <span className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    className="tracker-comment-edit text-nim-faint hover:text-nim"
+                    title="Edit comment"
+                    onClick={() => { setEditingId(comment.id); setEditBody(comment.body); }}
+                  >
+                    <MaterialSymbol icon="edit" size={13} />
+                  </button>
+                  <button
+                    className="tracker-comment-delete text-nim-faint hover:text-nim-error"
+                    title="Delete comment"
+                    onClick={() => handleDelete(comment.id)}
+                  >
+                    <MaterialSymbol icon="delete" size={13} />
+                  </button>
+                </span>
+              )}
+            </div>
+            {isEditing ? (
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={editBody}
+                  autoFocus
+                  onChange={e => setEditBody(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleEditSave(comment.id); }
+                    if (e.key === 'Escape') { setEditingId(null); }
+                  }}
+                  className="flex-1 bg-nim-secondary border border-nim rounded px-2 py-1 text-xs text-nim outline-none focus:border-nim-primary"
+                />
+                <button
+                  onClick={() => handleEditSave(comment.id)}
+                  disabled={!editBody.trim()}
+                  className="px-2 py-1 rounded text-xs bg-nim-primary text-nim-on-primary disabled:opacity-40"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  className="px-2 py-1 rounded text-xs text-nim-muted hover:text-nim"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-nim m-0 whitespace-pre-wrap">{comment.body}</p>
+            )}
           </div>
-          <p className="text-xs text-nim m-0 whitespace-pre-wrap">{comment.body}</p>
-        </div>
-      ))}
+        );
+      })}
       <div className="flex gap-1">
         <input
           type="text"
