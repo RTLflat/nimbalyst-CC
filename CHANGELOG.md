@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Contextual tips now fill empty AI sessions immediately and on every empty session, instead of after a delay and only once per app launch.
+- The tracker table stays responsive with large item lists by rendering only the visible rows.
 
 ### Fixed
 - Personal docs sync no longer overwrites newer local edits (or an open editor's unsaved changes) with an older synced copy.

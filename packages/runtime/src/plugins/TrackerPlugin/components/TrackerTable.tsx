@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { VList, type VListHandle } from 'virtua';
 import { useFloating, offset, flip, shift, FloatingPortal } from '@floating-ui/react';
 import { useAtomValue } from 'jotai';
 import type {
@@ -948,6 +949,16 @@ export function TrackerTable({
     handleBulkPriorityUpdate,
   } = rows;
 
+  // Windowing: the focused row may be unmounted, so keyboard nav can no longer
+  // rely on the row always being in the DOM. Scroll it into view via the VList
+  // handle (replaces useTrackerRows' querySelectorAll/scrollIntoView, which now
+  // no-ops on unmounted rows).
+  const vlistRef = useRef<VListHandle>(null);
+  useEffect(() => {
+    if (focusedIndex < 0) return;
+    vlistRef.current?.scrollToIndex(focusedIndex, { align: 'nearest' });
+  }, [focusedIndex]);
+
   const handleColumnClick = (column: SortColumn) => {
     const newDirection = currentSortBy === column && currentSortDirection === 'desc' ? 'asc' : 'desc';
     if (currentSortBy !== column) {
@@ -1212,7 +1223,7 @@ export function TrackerTable({
       )}
 
       {/* List */}
-      <div ref={tableRef} tabIndex={0} className="tracker-table-container tracker-table flex-1 overflow-auto pb-1 outline-none">
+      <div ref={tableRef} tabIndex={0} className="tracker-table-container tracker-table flex-1 overflow-hidden pb-1 outline-none">
         {sortedItems.length === 0 ? (
           <div>
             {loading ? (
@@ -1263,7 +1274,8 @@ export function TrackerTable({
             )}
           </div>
         ) : (
-          sortedItems.map((item, index) => {
+          <VList ref={vlistRef} className="tracker-table-vlist !h-full" style={{ overflowX: 'hidden' }}>
+          {sortedItems.map((item, index) => {
             const title = getRecordTitle(item);
             const status = getRecordStatus(item);
             const priority = getRecordPriority(item);
@@ -1336,7 +1348,8 @@ export function TrackerTable({
                 </div>
               </div>
             );
-          })
+          })}
+          </VList>
         )}
       </div>
 
