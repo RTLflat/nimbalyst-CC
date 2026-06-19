@@ -21,6 +21,7 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 import { encryptSheetToken, decryptSheetToken } from './sheetTokenCrypto';
+import { logger } from '../../utils/logger';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -53,6 +54,7 @@ describe('encryptSheetToken', () => {
     expect(enc).toBeUndefined();
     expect(plain).toBe('my-secret-token');
     expect(mockSafeStorage.encryptString).not.toHaveBeenCalled();
+    expect(logger.main.warn).toHaveBeenCalled();
   });
 });
 
@@ -85,5 +87,13 @@ describe('decryptSheetToken', () => {
       throw new Error('keychain rejected');
     });
     expect(decryptSheetToken({ accessTokenEnc: 'Zm9v' })).toBeUndefined();
+    expect(logger.main.error).toHaveBeenCalled();
+  });
+
+  it('warns and returns undefined when an encrypted token exists but the keychain is unavailable', () => {
+    mockSafeStorage.isEncryptionAvailable.mockReturnValue(false);
+    expect(decryptSheetToken({ accessTokenEnc: 'Zm9v' })).toBeUndefined();
+    expect(mockSafeStorage.decryptString).not.toHaveBeenCalled();
+    expect(logger.main.warn).toHaveBeenCalled();
   });
 });

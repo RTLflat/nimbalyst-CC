@@ -47,5 +47,10 @@ export function decryptSheetToken(
       return undefined;
     }
   }
+  if (stored.accessTokenEnc && !available()) {
+    logger.main.warn(
+      '[sheetTokenCrypto] encrypted token present but safeStorage is unavailable — cannot decrypt',
+    );
+  }
   return stored.accessToken; // legacy plaintext (or fallback-stored)
 }
