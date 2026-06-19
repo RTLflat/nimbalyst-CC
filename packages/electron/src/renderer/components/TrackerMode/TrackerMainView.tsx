@@ -651,16 +651,18 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
 
   /** Bulk delete for multi-select context menu */
   const handleDeleteItems = useCallback(async (itemIds: string[]) => {
-    for (const itemId of itemIds) {
-      try {
-        await window.electronAPI.documentService.deleteTrackerItem({ itemId });
-        if (selectedItemId === itemId) {
-          setModeLayout({ selectedItemId: null });
+    await Promise.all(
+      itemIds.map(async (itemId) => {
+        try {
+          await window.electronAPI.documentService.deleteTrackerItem({ itemId });
+          if (selectedItemId === itemId) {
+            setModeLayout({ selectedItemId: null });
+          }
+        } catch (error) {
+          console.error('[TrackerMainView] Failed to delete item:', error);
         }
-      } catch (error) {
-        console.error('[TrackerMainView] Failed to delete item:', error);
-      }
-    }
+      }),
+    );
   }, [selectedItemId, setModeLayout]);
 
   const teamOrgId = useAtomValue(activeTeamOrgIdAtom);
@@ -685,13 +687,15 @@ export const TrackerMainView: React.FC<TrackerMainViewProps> = ({
 
   /** Bulk archive for multi-select context menu */
   const handleArchiveItems = useCallback(async (itemIds: string[], archive: boolean) => {
-    for (const itemId of itemIds) {
-      try {
-        await window.electronAPI.documentService.archiveTrackerItem({ itemId, archive });
-      } catch (error) {
-        console.error('[TrackerMainView] Failed to archive item:', error);
-      }
-    }
+    await Promise.all(
+      itemIds.map(async (itemId) => {
+        try {
+          await window.electronAPI.documentService.archiveTrackerItem({ itemId, archive });
+        } catch (error) {
+          console.error('[TrackerMainView] Failed to archive item:', error);
+        }
+      }),
+    );
   }, []);
 
   const handleNewItem = useCallback((type: string) => {
