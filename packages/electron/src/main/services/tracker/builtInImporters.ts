@@ -14,10 +14,7 @@
  */
 
 import type { ImporterMethods, TrackerImporterContribution } from '@nimbalyst/extension-sdk';
-import {
-  GOOGLE_SHEETS_CONTRIBUTION,
-  GOOGLE_SHEETS_PROVIDER_ID,
-} from './googleSheetsImporterMapping';
+import { GOOGLE_SHEETS_CONTRIBUTION } from './googleSheetsImporterMapping';
 import { createGoogleSheetsBuiltInImporter } from './googleSheetsImporter';
 
 export interface BuiltInImporter {
@@ -48,11 +45,3 @@ export function getBuiltInImporter(providerId: string): BuiltInImporter | null {
   if (!builtInImportersEnabled()) return null;
   return REGISTRY.find((b) => b.contribution.id === providerId) ?? null;
 }
-
-/** Find a built-in importer by URN scheme, or `null` when the flag is off. */
-export function getBuiltInImporterByUrnScheme(scheme: string): BuiltInImporter | null {
-  if (!builtInImportersEnabled()) return null;
-  return REGISTRY.find((b) => b.contribution.urnScheme === scheme) ?? null;
-}
-
-export { GOOGLE_SHEETS_PROVIDER_ID };
